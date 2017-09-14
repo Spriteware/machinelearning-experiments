@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Experiment</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <style>
+
+        h1 {
+            text-align: center;
+        }
+
+        canvas {
+            display: block;
+            width: auto;
+            margin: auto;
+            cursor: crosshair;
+        }
+
+        #global_error {
+            padding-top: 10px;
+            color: #d46363;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        output {
+            display: block;
+        }
+
+        svg {
+            display: block;
+            margin: auto;
+        }
+
+        #tooltip {
+            position: absolute;
+            display: inline-block;
+            padding: 5px;
+            font: 12px Consolas;
+            background: rgba(238, 238, 238, 0.67);
+            border: 1px solid #515151;
+        }
+
+        #tooltip.off {
+            display: none;
+        }
+
+        .neuron {
+            fill: #ffe5e5;
+            stroke: #c7c7c7;
+            stroke-width: 2;
+        }
+
+        .weight {
+            fill: none;
+            stroke: #c7c7c7;
+        }
+
+        .weight-text {
+            font-size: 11px;
+            fill: #7D3833;
+        }
+
+        
+    </style>
+</head>
+<body>
+
+<h1>Mouse Experiment with Perceptrons in JS</h1>
+<p>
+    <!-- <b>Left click :</b> add node<br /> -->
+</p>
+
+<canvas></canvas>
+<div id="global_error">global error: <span></span></div>
+<svg width="600" height="400"></svg>
+<div id="tooltip" class="off"></div>
+
+<script src="mouse_experiment.js"></script>
+</body>
+</html>
