@@ -38,7 +38,6 @@ function update() {
 
     // if (!mouse.refresh)
     //     return;
-
     // mouse.refresh = false;
 
     var norm = _CANVAS_WIDTH; // Used for normalization
@@ -69,13 +68,7 @@ function update() {
     }
 
     var predicted_values = net.forward(x);
-    // console.log( predicted_values );
-    // console.log('predicted value: ', predicted_values.dw);
-    // console.log(predicted_values.w[0] * norm, predicted_values.w[1] * norm);
-
-    // DOM.convnetOutput.innerHTML = (predicted_values.w[0] * norm).toFixed(2) + " " + (predicted_values.w[1] * norm).toFixed(2);
     DOM.convnetOutput.innerHTML = (predicted_values.w[0]).toFixed(3) + " " + (predicted_values.w[1]).toFixed(3);
-    // DOM.convnetOutput.innerHTML = (predicted_values.w[0]) + " " + (predicted_values.w[1]);
     
     // Draw circle
     ctx.save();
@@ -94,17 +87,13 @@ function update() {
 
     // Draw circle
     ctx.beginPath();
-    // ctx.arc(neurons[0].output * norm, neurons[1].output * norm, 50, 0, Math.PI * 2, false);
     ctx.arc(neurons[0].output, neurons[1].output, 50, 0, Math.PI * 2, false);
     ctx.stroke();
 
     // Update global error display
-    // DOM.globalError.innerHTML = (brain.globalError * norm).toFixed(6);
     DOM.globalError.innerHTML = (brain.globalError).toFixed(6);
 
     // Update Network SVG Vizualisation
-    // brain.visualize(inputs, [norm, norm]);
-    // brain.visualize(inputs, [1, 1]);
     brain.visualize(inputs, [1, 1]);
 }
 
@@ -155,11 +144,6 @@ window.onload = function() {
         brain.neurons[i].activation = brain.static_reluActivation;
         brain.neurons[i].derivative = brain.static_reluDerivative;
     }
-
-    // for (var j = 0; j < brain.nbWeights; j++) {
-    //     brain.weights[j] = 1;
-    //     brain.weightsTm1[j] = 1;
-    // }
 
     document.body.appendChild( brain.createVisualization() );
 
