@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mouse Experiment</title>
+    <title>Gravity-ball Experiment</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,6 +19,7 @@
         canvas {
             display: block;
             width: auto;
+            height: 400px;
             margin: auto;
             cursor: crosshair;
         }
@@ -34,17 +35,21 @@
 </head>
 <body>
 
-<h1>Mouse Experiment with Perceptrons in JS</h1>
+<h1>Gravity-ball Experiment with Perceptrons in JS</h1>
+<p>Ball's gravity is 0 in free fall, contains gravity otherwise</p>
+<p id="learning_rate">
+    <b>Learning rate:</b> <span></span><br />
+    <input style="width: 500px;" type="range" value="10">
+</p>
 
 <canvas></canvas>
-<div id="global_error">global error: <span></span></div>
-<input id="backpropagate" name="backpropagate" type="checkbox" checked="checked" /> <label for="backpropagate">backpropagation</label> 
-<button id="dropout">dropout</button>
+<p>
+    <span id="acceleration_outputs"><b>acceleration:</b> &emsp;<span></span>&emsp;<span></span></span><br />
+    <span id="global_error">global error: <span></span></span>
+    <input id="backpropagate" name="backpropagate" type="checkbox" checked="checked" /> <label for="backpropagate">backpropagation</label> 
+</p>
 
-<br /> <br />convnet output: <span id="convnet"></span>
-
-<script src="convnet-min.js"></script>
 <script src="neural_network.js"></script>
-<script src="mouse_experiment.js"></script>
+<script src="ball_experiment.js"></script>
 </body>
 </html>

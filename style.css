@@ -3,6 +3,7 @@ body {
 }
 
 canvas {
+    display: block;
     position: relative;
     width: 300px;
     height: 300px;
@@ -10,5 +11,45 @@ canvas {
 }
 
 output {
+    display: block;
     font-family: Consolas;
+}
+
+svg {
+    display: block;
+    margin: auto;
+}
+
+/** Neural network : **/
+
+
+
+#tooltip {
+    position: absolute;
+    display: inline-block;
+    padding: 5px;
+    font: 12px Consolas;
+    text-align: left;
+    background: rgba(238, 238, 238, 0.67);
+    border: 1px solid #515151;
+}
+
+#tooltip.off {
+    display: none;
+}
+
+.neuron {
+    /* fill: #ffe5e5; */
+    stroke: #c7c7c7;
+    stroke-width: 2;
+}
+
+.weight {
+    fill: none;
+    stroke: #c7c7c7;
+}
+
+.weight-text {
+    font-size: 11px;
+    fill: #7D3833;
 }
