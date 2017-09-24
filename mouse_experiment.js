@@ -145,24 +145,15 @@ window.onload = function() {
         // layers: [2, 3, 4, 5, 6, 5, 4, 3, 2]
         // layers: [2, 40, 2]
     });
-
-    var tanh_activation = function(x) { return Math.tanh(x); };
-    var tanh_derivative = function(x) { return 1 - (tanh_activation(x) * tanh_activation(x)); };
-
-    var sigmoid_activation = function(x) { return 1 / (1 + Math.exp(-x)); };
-    var sigmoid_derivative = function(x) { return sigmoid_activation(x) * (1 - sigmoid_activation(x)); };
-
-    var relu_activation = function(x) { return x < 0 ? 0 : x; };
-    var relu_derivative = function(x) { return x < 0 ? 0 : 1; };
     
     // Setting activation function for hiddens layer:
     for (var i = brain.layers[0]; i < brain.layersSum[brain.nbLayers-2]; i++) {
-        // brain.neurons[i].activation = tanh_activation;
-        // brain.neurons[i].derivative = tanh_derivative;
-        // brain.neurons[i].activation = sigmoid_activation;
-        // brain.neurons[i].derivative = sigmoid_derivative;
-        brain.neurons[i].activation = relu_activation;
-        brain.neurons[i].derivative = relu_derivative;
+        // brain.neurons[i].activation = brain.static_tanhActivation;
+        // brain.neurons[i].derivative = brain.static_tanhDerivative;
+        // brain.neurons[i].activation = brain.static_sigmoidActivation;
+        // brain.neurons[i].derivative = brain.static_sigmoidDerivative;
+        brain.neurons[i].activation = brain.static_reluActivation;
+        brain.neurons[i].derivative = brain.static_reluDerivative;
     }
 
     // for (var j = 0; j < brain.nbWeights; j++) {

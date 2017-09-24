@@ -1,20 +1,41 @@
 const _CANVAS_WIDTH = 1400;
 const _CANVAS_HEIGHT = 800;
+const _WHEEL_STEP = 20;
 const _BALL_RADIUS = 40;
 const _BALL_MASS = 50;
 const _BALL_ELASTICITY = 0.4; // Ball can contract itself to (1 - _BALL_ELASTICITY) * size
 const _BALL_FRICTION = 0.9;
-const _WHEEL_STEP = 20;
-// const _GRAVITY = 9.81;
 const _GAME_GRAVITY = 0.1;
 const _SPRING_MAX_THRESHOLD = 25;
 const _SPRING_AIR_FRICTION = 3.5;
 const _NORMAL_AIR_FRICTION = 0.001;
 const _K = 0.1;
-const _FRAMERATE = 1;
-const _INPUTS_MAX_LENGTH = 50;
 
 const X = 0, Y = 1;
+
+var Utils = {
+    static: {}
+};
+
+Utils.static.norm = function(x, y) {
+
+    return Math.sqrt( x*x + y*y );
+};
+
+Utils.static.exportTrainingData = function() {
+
+    console.info("Saving training data...", "Reading 'training_data'");
+
+    var output = document.createElement("textarea");
+    output.setAttribute("disabled", "disabled");
+    output.innerHTML = "var training_data_imported = " + JSON.stringify(training_data, null, '\t') + ";";
+
+    document.body.appendChild( output );
+
+    return "Export completed for " + training_data.length + " entries.";
+};
+
+//////////////////////////////////////////////
 
 
 var Ball = function(params) {
@@ -113,13 +134,14 @@ Ball.prototype.update = function(dt, follow) {
 
 function init() {
 
-    DOM.canvas.width = _CANVAS_WIDTH;
-    DOM.canvas.height = _CANVAS_HEIGHT;
+    DOM.playground.width = _CANVAS_WIDTH;
+    DOM.playground.height = _CANVAS_HEIGHT;
 
     ctx.translate(_CANVAS_WIDTH / 2, _CANVAS_HEIGHT / 2);
     ctx.scale(1, -1);
+    ctx.globalAlpha = 0.6;    
 
-    DOM.canvas.addEventListener("mousedown", function(e) {
+    DOM.playground.addEventListener("mousedown", function(e) {
 
         e.preventDefault();
         e.stopPropagation();
@@ -127,7 +149,7 @@ function init() {
         mouse.click = true;
     }); 
     
-    DOM.canvas.addEventListener("mouseup", function(e) {
+    DOM.playground.addEventListener("mouseup", function(e) {
 
         e.preventDefault();
         e.stopPropagation();
@@ -135,7 +157,7 @@ function init() {
         mouse.click = false;
     });
 
-    DOM.canvas.addEventListener("mouseout", function(e) {
+    DOM.playground.addEventListener("mouseout", function(e) {
         
         e.stopPropagation();
         e.preventDefault();
@@ -143,16 +165,16 @@ function init() {
         mouse.click = false;
     });
 
-    DOM.canvas.addEventListener("mousemove", function(e) {
+    DOM.playground.addEventListener("mousemove", function(e) {
 
         e.preventDefault();
         e.stopPropagation();
 
-        mouse.x = (e.pageX - DOM.canvas.offsetLeft) * 2 - _CANVAS_WIDTH / 2;
-        mouse.y = (e.pageY - DOM.canvas.offsetTop) * -2 + _CANVAS_HEIGHT / 2;
+        mouse.x = (e.pageX - DOM.playground.offsetLeft) * 2 - _CANVAS_WIDTH / 2;
+        mouse.y = (e.pageY - DOM.playground.offsetTop) * -2 + _CANVAS_HEIGHT / 2;
     });
 
-    DOM.canvas.addEventListener("wheel", function(e) {
+    DOM.playground.addEventListener("wheel", function(e) {
 
         e.preventDefault();
         mouse.wheel += e.deltaY / _WHEEL_STEP / 180 * Math.PI;
@@ -169,11 +191,9 @@ function init() {
     });
 
     DOM.learningRateRange.addEventListener("input", function(e) {
-        // console.log(e);
-        // console.log( e.target.value / );
 
         brain.lr = 1 / (e.target.value * e.target.value + 1);
-        DOM.learningRateOutput.innerHTML = brain.lr;
+        DOM.learningRateOutput.innerHTML = brain.lr.toFixed(8);
     });
 }
 
@@ -183,35 +203,33 @@ function update() {
     // setTimeout(function() { update(); }, 40);
 
     var SCALING = 100, PADDING = 200;
-    var now = Date.now(), dt = (now - time) / _FRAMERATE;
+    var now = Date.now(), dt = now - time;
     var gravity = ball.gravity(mouse.wheel);
     
     // Update ball coords at high frqency
     time = now;
     ball.update(dt, mouse.click);
 
-    //Build normalization
+    //////////////////////////////////////////
+
+    // Build inputs / targets
     var inputs = [ball.acc[X] * SCALING, ball.acc[Y] * SCALING];
-    inputs_saved.push(Math.abs(inputs[X]), Math.abs(inputs[Y]));
-    inputs_sum += Math.abs(inputs[X]) + Math.abs(inputs[Y]);
-
-    inputs_max = inputs_max < Math.abs(inputs[X]) ? Math.abs(inputs[X]) : inputs_max;
-
-    if (inputs_saved.length >= _INPUTS_MAX_LENGTH) {
-        inputs_sum -= inputs_saved.shift();
-        inputs_sum -= inputs_saved.shift();
-    }    
-
-    var mean = inputs_sum / inputs_saved.length;
-    console.log( inputs_max, inputs[X] / inputs_max, inputs[Y] / inputs_max );
-
-    // Feeforward NN
-    var normalized_inputs = [inputs[X] / inputs_max, inputs[Y] / inputs_max];
-    var target = [gravity[X] * SCALING, gravity[Y] * SCALING];
+    var targets = [gravity[X] * SCALING, gravity[Y] * SCALING];
+    training_data_max = training_data_max < Math.abs(inputs[X]) ? Math.abs(inputs[X]) : training_data_max;
+    training_data_max = training_data_max < Math.abs(inputs[Y]) ? Math.abs(inputs[Y]) : training_data_max;
+    
+    // Feeforward NN with normalized inputs
+    var normalized_inputs = [inputs[X] / training_data_max, inputs[Y] / training_data_max];
     var neurons = brain.feed(inputs);
 
     if (DOM.backpropagationCheckbox.checked === true)
-        brain.backpropagate(target);
+        brain.backpropagate(targets);
+
+    // Build training data for future exportation
+    training_data.push({
+        inputs: inputs,
+        targets: targets
+    });
 
     // Update global error display
     DOM.globalError.innerHTML = (brain.globalError * _CANVAS_WIDTH).toFixed(6);
@@ -219,20 +237,11 @@ function update() {
     // Update Network SVG Vizualisation
     brain.visualize(normalized_inputs);
 
-
-    // -------------------------------
+    //////////////////////////////////////////
     
     ctx.clearRect(-_CANVAS_WIDTH / 2, -_CANVAS_HEIGHT / 2, _CANVAS_WIDTH, _CANVAS_HEIGHT);
 
-
-    var d1 = norm(gravity[X], gravity[Y]), d2 = norm(ball.acc[X], ball.acc[Y]);
-
-    // console.group();
-    // console.log( "gravity", (gravity[X] * scaling).toFixed(5), (gravity[Y] * scaling).toFixed(5) );
-    // console.log( "ball_acc", (ball.acc[X] * scaling ).toFixed(5), (ball.acc[Y] * scaling ).toFixed(5) );
-    // console.groupEnd();
-
-    ctx.globalAlpha = 0.6;
+    var d1 = Utils.static.norm(gravity[X], gravity[Y]), d2 = Utils.static.norm(ball.acc[X], ball.acc[Y]);
 
     // Draw gravity
     ctx.save();
@@ -259,7 +268,7 @@ function update() {
     // Draw ball acceleration
     if (neurons)
     {
-        var d3 = norm(neurons[X].output, neurons[Y].output);
+        var d3 = Utils.static.norm(neurons[X].output, neurons[Y].output);
         // console.log( neurons[X].output, neurons[Y].output );
         ctx.save();
         ctx.fillStyle = "purple";
@@ -272,34 +281,24 @@ function update() {
         ctx.restore();   
     }
 
-    ctx.globalAlpha = 1;
-
     // Draw ball
     ctx.beginPath();
     ctx.arc(ball.pos[X], ball.pos[Y], ball.radius, 0, Math.PI * 2, false);
     ctx.stroke();
 
-    // Update accelration output
+    // Update acceleration output
     DOM.accelerationOutputs[X].innerHTML = (inputs[X]).toFixed(4);
     DOM.accelerationOutputs[Y].innerHTML = (inputs[Y]).toFixed(4);
 }
 
-function saveJSON() {
-    
-    document.body.appendChild( new )
-}
 
-function norm(x, y) {
-
-    return Math.sqrt( x*x + y*y );
-}
-
-var DOM, ctx, mouse, ball, brain, time, inputs_saved = [], inputs_sum = 0, inputs_max = 0;
+var DOM, ctx, mouse, ball, brain, time;
+var training_data = [], training_data_max = 0;
 
 window.onload = function() {
 
     DOM = {
-        canvas: document.querySelector("canvas"),
+        playground: document.querySelector("#playground"),
         accelerationOutputs: document.querySelectorAll("#acceleration_outputs span"),
         globalError: document.querySelector("#global_error span"),
         backpropagationCheckbox: document.querySelector("#backpropagate"),  
@@ -307,31 +306,121 @@ window.onload = function() {
         learningRateOutput: document.querySelector("#learning_rate span")
     };
 
-    ctx = DOM.canvas.getContext("2d");
+    ctx = DOM.playground.getContext("2d");
 
     time = Date.now();
     mouse = {x: 1, y: 2, click: false, wheel: -Math.PI/2};
     ball = new Ball();
     brain = new Network({
-        lr: 0.0005,
+        lr: 0.00000001,
         momentum: 0,
-        layers: [2, 3, 2]
+        // layers: [2, 5, 5, 2]
+        layers: [2, 5, 6, 7, 6, 5, 2]
     });
     
-    document.body.appendChild( brain.createVisualization() );
+    DOM.learningRateOutput.innerHTML = brain.lr;
     
+    ///////////////////////////////////////////
+
+    // Initial training
+    if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
+    {
+        console.info("Detected training data: importation in processing...");
+        var epoch, i, l, inputs = [null, null], sum = 0, mean;
+
+        // Create canvas
+        var graph_width = 400, graph_height = 100;
+        var graph = document.createElement("canvas");
+        graph.setAttribute("width", graph_width);
+        graph.setAttribute("height", graph_height);
+        document.body.appendChild( graph );
+
+        // Create global error mean output
+        var global_errors_mean_output = document.createElement("samp");
+        document.body.appendChild( global_errors_mean_output ); 
+
+        var graph_ctx = graph.getContext("2d");
+        var global_errors = [];
+        var global_errors_sum = 0;
+        var max_global_error = 0;
+        var _EPOCHS = 10;
+
+        // Normalize
+        for (i = 0, l = training_data_imported.length; i < l; i++)
+            sum += Math.abs(training_data_imported[i].inputs[X]) + Math.abs(training_data_imported[i].inputs[Y]);
+
+        mean = sum / (l * training_data_imported[0].length); // generic formula
+
+        graph_ctx.scale(graph_width / (_EPOCHS * l), 1);
+        graph_ctx.globalAlpha = 0.5;
+
+        // Feeforward NN
+        for (epoch = 0; epoch < _EPOCHS; epoch++)
+        {
+            for (i = 0; i < l; i++)
+            {
+                // TODO: use normalized ? 
+
+                brain.feed(training_data_imported[i].inputs);
+                brain.backpropagate(training_data_imported[i].targets);
+                
+                global_errors.push( brain.globalError );
+                global_errors_sum += brain.globalError;
+                max_global_error = brain.globalError > max_global_error ? brain.globalError : max_global_error;
+            }
+        }
+
+        var global_errors_mean = global_errors_sum / (_EPOCHS * l); 
+
+        // Update graph
+        requestAnimationFrame(function() {
+
+            var g, gel = global_errors.length, sum = 0, std_deviation;
+
+            // Compute standart deviation
+            for (g = 0; g < gel; g++)
+                sum += (global_errors[g] - global_errors_mean) * (global_errors[g] - global_errors_mean);
+            std_deviation = Math.sqrt(sum / gel); 
+
+            // console.log( (brain.globalError * _CANVAS_WIDTH).toFixed(6) );
+            graph_ctx.clearRect(0, 0, graph_width, graph_height);
+            graph_ctx.beginPath();
+            graph_ctx.moveTo(0, graph_height);
+
+            for (g = 0; g < gel; g++) {
+
+                // If not in confidence interval, we do not display
+                if (global_errors[g] > global_errors_mean - std_deviation && global_errors[g] < global_errors_mean + std_deviation)
+                    graph_ctx.lineTo(g, graph_height - global_errors[g] / global_errors_mean * graph_height * 0.2);
+            }
+
+            graph_ctx.lineTo(g, graph_height);
+            graph_ctx.closePath();
+            graph_ctx.fill();
+
+            global_errors_mean_output.innerHTML = "global error mean: " + global_errors_mean;
+        
+        });
+
+        console.info("Done. Gone thru %d epochs", epoch);
+    }
+
+    ///////////////////////////////////////////
+
+    document.body.appendChild( brain.createVisualization() );
+
     init();
     update();
-
-    /*
-
-        Observation 1: lorsque je drag la ball avec la souris, l'accélération augmente de ouf et donc l'erreur globale aussi.
-        Si je restreint le learning rate, alors le réseau n'apprend rien de manière générale.
-        Il faut trouver comment limiter l'explosition des erreurs et des weights. Je cherche vers la régularization des weights, notemment weight penalty L2
-        Lecture avec explications: http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec9.pdf
-
-        Explications activations functions et regularization: 
-        http://lamda.nju.edu.cn/weixs/project/CNNTricks/CNNTricks.html
-
-    */ 
 };
+
+/*
+
+    Observation 1: lorsque je drag la ball avec la souris, l'accélération augmente de ouf et donc l'erreur globale aussi.
+    Si je restreint le learning rate, alors le réseau n'apprend rien de manière générale.
+    Il faut trouver comment limiter l'explosition des erreurs et des weights. Je cherche vers la régularization des weights, notemment weight penalty L2
+    Lecture avec explications: http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec9.pdf
+
+    Explications activations functions et regularization: 
+    http://lamda.nju.edu.cn/weixs/project/CNNTricks/CNNTricks.html
+
+*/ 

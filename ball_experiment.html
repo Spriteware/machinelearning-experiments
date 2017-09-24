@@ -19,9 +19,13 @@
         canvas {
             display: block;
             width: auto;
-            height: 400px;
+            height: auto;
             margin: auto;
             cursor: crosshair;
+        }
+
+        #playground {
+            height: 400px;
         }
 
         #global_error {
@@ -31,25 +35,34 @@
             text-align: center;
         }
 
+        textarea { /* exported data */
+            width: 400px;
+            height: 200px;
+        }
+
     </style>
 </head>
 <body>
 
 <h1>Gravity-ball Experiment with Perceptrons in JS</h1>
-<p>Ball's gravity is 0 in free fall, contains gravity otherwise</p>
+<p>
+    Ball's gravity is 0 in free fall, contains gravity otherwise<br />
+    Type <samp>Utils.static.exportTrainingData()</samp> to save current generated training data.
+</p>
 <p id="learning_rate">
     <b>Learning rate:</b> <span></span><br />
     <input style="width: 500px;" type="range" value="10">
 </p>
 
-<canvas></canvas>
+<canvas id="playground"></canvas>
 <p>
     <span id="acceleration_outputs"><b>acceleration:</b> &emsp;<span></span>&emsp;<span></span></span><br />
     <span id="global_error">global error: <span></span></span>
-    <input id="backpropagate" name="backpropagate" type="checkbox" checked="checked" /> <label for="backpropagate">backpropagation</label> 
+    <input id="backpropagate" name="backpropagate" type="checkbox" /> <label for="backpropagate">backpropagation</label> 
 </p>
 
-<script src="neural_network.js"></script>
+<script src="data/data-1.js"></script>
+<script src="lib/neural_network.js"></script>
 <script src="ball_experiment.js"></script>
 </body>
 </html>
