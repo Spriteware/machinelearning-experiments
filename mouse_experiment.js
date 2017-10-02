@@ -119,9 +119,11 @@ window.onload = function() {
         // lr: 0.00005,
         // layers: [2, 3, 2],
         
-        lr: 0.0000005,
+        // # good-config 1: (activation function = linear)
+        lr: 0.0005,
         layers: [2, 3, 2],
         
+        // #good-config 2: (activation function = linear)
         // lr: 0.000005,
         // layers: [2, 4, 4, 4, 2],
         
@@ -134,16 +136,11 @@ window.onload = function() {
         // layers: [2, 3, 4, 5, 6, 5, 4, 3, 2]
         // layers: [2, 40, 2]
     });
-    
+
     // Setting activation function for hiddens layer:
-    for (var i = brain.layers[0]; i < brain.layersSum[brain.nbLayers-2]; i++) {
-        // brain.neurons[i].activation = brain.static_tanhActivation;
-        // brain.neurons[i].derivative = brain.static_tanhDerivative;
-        // brain.neurons[i].activation = brain.static_sigmoidActivation;
-        // brain.neurons[i].derivative = brain.static_sigmoidDerivative;
-        brain.neurons[i].activation = brain.static_reluActivation;
-        brain.neurons[i].derivative = brain.static_reluDerivative;
-    }
+    // brain.setHiddenLayerToActivation(brain.static_tanhActivation, brain.static_tanhDerivative);
+    // brain.setHiddenLayerToActivation(brain.static_sigmoidActivation, brain.static_sigmoidDerivative);
+    // brain.setHiddenLayerToActivation(brain.static_reluActivation, brain.static_reluDerivative);
 
     document.body.appendChild( brain.createVisualization() );
 
@@ -271,4 +268,7 @@ window.onload = function() {
     pas mal ! on y arrive! sachant que _weight est de 800...
     EDIT dans la seconde : j'ai fait un test en mettant tous les biais à 0.... Le neural net converge parfaitement directement vers la solution.
     Le cercle suit la souris sans aucun problème, le global output est inférieur à 0 peut importe mes mouvements...
-*/
+
+    DOnc il serait mieux de ne pas utiliser le global error pour savoir l'erreur mais uniquement l'erreur en output.
+    Car sur de gros réseaux de neurones, on ne peut pas avoir tous les gradients à 0
+    */

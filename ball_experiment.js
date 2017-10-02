@@ -312,97 +312,30 @@ window.onload = function() {
     mouse = {x: 1, y: 2, click: false, wheel: -Math.PI/2};
     ball = new Ball();
     brain = new Network({
-        lr: 0.00000001,
+        lr: 0.0001,
         momentum: 0,
-        // layers: [2, 5, 5, 2]
-        layers: [2, 5, 6, 7, 6, 5, 2]
+        layers: [2, 5, 5, 2]
+        // layers: [2, 5, 6, 6, 6, 6, 6, 6, 6, 5, 2]
+        // layers: [2, 5, 15, 15, 15, 15, 5, 2]
     });
     
     DOM.learningRateOutput.innerHTML = brain.lr;
+
+    // Setting activation function for hiddens layer:
+    // brain.setHiddenLayerToActivation(brain.static_tanhActivation, brain.static_tanhDerivative);
+    // brain.setHiddenLayerToActivation(brain.static_sigmoidActivation, brain.static_sigmoidDerivative);
+    // brain.setHiddenLayerToActivation(brain.static_reluActivation, brain.static_reluDerivative);
+
     
     ///////////////////////////////////////////
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
     {
-        console.info("Detected training data: importation in processing...");
-        var epoch, i, l, inputs = [null, null], sum = 0, mean;
-
-        // Create canvas
-        var graph_width = 400, graph_height = 100;
-        var graph = document.createElement("canvas");
-        graph.setAttribute("width", graph_width);
-        graph.setAttribute("height", graph_height);
-        document.body.appendChild( graph );
-
-        // Create global error mean output
-        var global_errors_mean_output = document.createElement("samp");
-        document.body.appendChild( global_errors_mean_output ); 
-
-        var graph_ctx = graph.getContext("2d");
-        var global_errors = [];
-        var global_errors_sum = 0;
-        var max_global_error = 0;
-        var _EPOCHS = 10;
-
-        // Normalize
-        for (i = 0, l = training_data_imported.length; i < l; i++)
-            sum += Math.abs(training_data_imported[i].inputs[X]) + Math.abs(training_data_imported[i].inputs[Y]);
-
-        mean = sum / (l * training_data_imported[0].length); // generic formula
-
-        graph_ctx.scale(graph_width / (_EPOCHS * l), 1);
-        graph_ctx.globalAlpha = 0.5;
-
-        // Feeforward NN
-        for (epoch = 0; epoch < _EPOCHS; epoch++)
-        {
-            for (i = 0; i < l; i++)
-            {
-                // TODO: use normalized ? 
-
-                brain.feed(training_data_imported[i].inputs);
-                brain.backpropagate(training_data_imported[i].targets);
-                
-                global_errors.push( brain.globalError );
-                global_errors_sum += brain.globalError;
-                max_global_error = brain.globalError > max_global_error ? brain.globalError : max_global_error;
-            }
-        }
-
-        var global_errors_mean = global_errors_sum / (_EPOCHS * l); 
-
-        // Update graph
-        requestAnimationFrame(function() {
-
-            var g, gel = global_errors.length, sum = 0, std_deviation;
-
-            // Compute standart deviation
-            for (g = 0; g < gel; g++)
-                sum += (global_errors[g] - global_errors_mean) * (global_errors[g] - global_errors_mean);
-            std_deviation = Math.sqrt(sum / gel); 
-
-            // console.log( (brain.globalError * _CANVAS_WIDTH).toFixed(6) );
-            graph_ctx.clearRect(0, 0, graph_width, graph_height);
-            graph_ctx.beginPath();
-            graph_ctx.moveTo(0, graph_height);
-
-            for (g = 0; g < gel; g++) {
-
-                // If not in confidence interval, we do not display
-                if (global_errors[g] > global_errors_mean - std_deviation && global_errors[g] < global_errors_mean + std_deviation)
-                    graph_ctx.lineTo(g, graph_height - global_errors[g] / global_errors_mean * graph_height * 0.2);
-            }
-
-            graph_ctx.lineTo(g, graph_height);
-            graph_ctx.closePath();
-            graph_ctx.fill();
-
-            global_errors_mean_output.innerHTML = "global error mean: " + global_errors_mean;
-        
-        });
-
-        console.info("Done. Gone thru %d epochs", epoch);
+        setTimeout(function() {
+            var epochs = 100;
+            document.body.appendChild( brain.train(training_data_imported, epochs, true) );
+        }, 100);
     }
 
     ///////////////////////////////////////////
@@ -422,5 +355,17 @@ window.onload = function() {
 
     Explications activations functions et regularization: 
     http://lamda.nju.edu.cn/weixs/project/CNNTricks/CNNTricks.html
+
+    Observation 2: j'arrive à un point mort ou je ne peux pas extraire la composante de gravité de l'accélération, surtout après un drag de souris
+    je viens de finir de mettre en place la possibilité d'entraîner avec un training set au préalable, et plusieurs fois (_EPOCHS fois) + l'affichage de l'erreur globale
+    sur un graphique. Etant donné que le but est d'avoir l'erreur globale qui tend vers 0, le graphique doit me montrer une courbe qui tend vers 0
+    Seulement ce n'est pas le cas l'algorithme apprend au début mais rapidement tend vers une moyenne. 
+    Chaque époque créé un pic puis une décroissance exponentielle vers 0: l'algorithme n'apprend pas du training set vu qu'à chaque fois en revoyant celui-ci, l'erreur globale regrimpe!
+    -- J'ai pourtant mis en places les solutions suivantes :
+    * Varier le learning rate
+    * Varier le nombre d'époques
+    * Agrandir le training set de 3K à 8K
+    * Agrandir la deepness (9 hidden layers)
+    * Agrandir le nombre de neurons par layer (jusqu'à 20 sans broncher!)
 
 */ 
