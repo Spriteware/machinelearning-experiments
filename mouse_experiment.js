@@ -110,12 +110,12 @@ window.onload = function() {
         // layers: [2, 3, 2],
         
         // # good-config 1: (activation function = linear)
-        lr: 0.01,
-        layers: [2, 3, 2],
+        // lr: 0.001,
+        // layers: [2, 3, 2],
         
         // #good-config 2: (activation function = linear)
-        // lr: 0.000005,
-        // layers: [2, 4, 4, 4, 2],
+        lr: 0.0005,
+        layers: [2, 4, 4, 4, 2],
         
         // layers: [2, 4, 4, 4, 2],
         // layers: [2, 10, 2],
@@ -134,7 +134,7 @@ window.onload = function() {
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-        document.body.appendChild( brain.train(training_data_imported, 20, true) ); // second parameter is number of epochs
+        document.body.appendChild( brain.train(training_data_imported, 200, true) ); // second parameter is number of epochs
 
     document.body.appendChild( brain.createVisualization() );
     
