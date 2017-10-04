@@ -48,11 +48,11 @@ function init() {
     });
 }
 
+var norm = Math.sqrt(_CANVAS_WIDTH * _CANVAS_WIDTH + _CANVAS_HEIGHT * _CANVAS_HEIGHT);
+
 function update() {
 
     requestAnimationFrame(function() { update(); });
-
-    var norm = _CANVAS_WIDTH; // Used for normalization
 
     ctx.clearRect(-_CANVAS_WIDTH / 2, -_CANVAS_HEIGHT / 2, _CANVAS_WIDTH, _CANVAS_HEIGHT);
     
@@ -60,7 +60,8 @@ function update() {
 
     // Feeforward NN
     var inputs = [mouse.x / norm, mouse.y / norm];
-    var targets = [mouse.x, mouse.y];
+    var targets = [mouse.x / norm, mouse.y / norm];
+    // var targets = [mouse.x, mouse.y];
     var neurons = brain.feed(inputs);
 
     // Build training data for future exportation
@@ -79,7 +80,7 @@ function update() {
 
     // Draw circle
     ctx.beginPath();
-    ctx.arc(neurons[0].output, neurons[1].output, 50, 0, Math.PI * 2, false);
+    ctx.arc(neurons[0].output * norm, neurons[1].output * norm, 50, 0, Math.PI * 2, false);
     ctx.stroke();
 
     // Update global error display
@@ -109,7 +110,7 @@ window.onload = function() {
         // layers: [2, 3, 2],
         
         // # good-config 1: (activation function = linear)
-        lr: 0.0005,
+        lr: 0.01,
         layers: [2, 3, 2],
         
         // #good-config 2: (activation function = linear)
@@ -133,7 +134,7 @@ window.onload = function() {
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-        document.body.appendChild( brain.train(training_data_imported, 1, true) ); // second parameter is number of epochs
+        document.body.appendChild( brain.train(training_data_imported, 10, true) ); // second parameter is number of epochs
 
     document.body.appendChild( brain.createVisualization() );
     
