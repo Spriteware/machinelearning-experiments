@@ -200,7 +200,7 @@ function init() {
 function update() {
 
     requestAnimationFrame(function() { update(); });
-    // setTimeout(function() { update(); }, 40);
+    // setTimeout(function() { update(); }, 100);
 
     var SCALING = 100, PADDING = 200;
     var now = Date.now(), dt = now - time;
@@ -212,14 +212,27 @@ function update() {
 
     //////////////////////////////////////////
 
+    var normalize = function(x) {
+        return x > 0 ? Math.sqrt(x / 10) : -Math.sqrt(-x / 10);
+    };
+
+    var unormalize = function(x) {
+        return x * x * 10;
+    };
+
+    // console.clear();
+    // console.log( ball.acc[X], ball.acc[Y] );
+    // console.log( normalize(ball.acc[X]), normalize(ball.acc[Y]) );
+    // console.log( "-----" );
+
     // Build inputs / targets
-    var inputs = [ball.acc[X] * SCALING, ball.acc[Y] * SCALING];
-    var targets = [gravity[X] * SCALING, gravity[Y] * SCALING];
-    training_data_max = training_data_max < Math.abs(inputs[X]) ? Math.abs(inputs[X]) : training_data_max;
-    training_data_max = training_data_max < Math.abs(inputs[Y]) ? Math.abs(inputs[Y]) : training_data_max;
+    var inputs = [normalize(ball.acc[X]), normalize(ball.acc[Y])];
+    var targets = [normalize(gravity[X]), normalize(gravity[Y])];
+    // training_data_max = training_data_max < Math.abs(inputs[X]) ? Math.abs(inputs[X]) : training_data_max;
+    // training_data_max = training_data_max < Math.abs(inputs[Y]) ? Math.abs(inputs[Y]) : training_data_max;
     
     // Feeforward NN with normalized inputs
-    var normalized_inputs = [inputs[X] / training_data_max, inputs[Y] / training_data_max];
+    // var normalized_inputs = [inputs[X] / training_data_max, inputs[Y] / training_data_max];
     var neurons = brain.feed(inputs);
 
     if (DOM.backpropagationCheckbox.checked === true)
@@ -235,7 +248,7 @@ function update() {
     DOM.globalError.innerHTML = (brain.globalError * _CANVAS_WIDTH).toFixed(6);
     
     // Update Network SVG Vizualisation
-    brain.visualize(normalized_inputs);
+    brain.visualize(inputs);
 
     //////////////////////////////////////////
     
@@ -265,14 +278,17 @@ function update() {
     ctx.fill();
     ctx.restore();
 
+    var x = unormalize(neurons[X].output);
+    var y = unormalize(neurons[Y].output);
+
     // Draw ball acceleration
     if (neurons)
     {
-        var d3 = Utils.static.norm(neurons[X].output, neurons[Y].output);
-        // console.log( neurons[X].output, neurons[Y].output );
+        var d3 = Utils.static.norm(x, y);
+
         ctx.save();
         ctx.fillStyle = "purple";
-        ctx.rotate(-Math.atan2(neurons[X].output, neurons[Y].output));
+        ctx.rotate(-Math.atan2(x, y));
         ctx.beginPath();
         ctx.moveTo(-10, 0);
         ctx.lineTo(0, SCALING * d3 + PADDING );
