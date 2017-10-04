@@ -314,31 +314,20 @@ window.onload = function() {
     brain = new Network({
         lr: 0.0001,
         momentum: 0,
+        hiddenLayerFunction: "linear",
         layers: [2, 5, 5, 2]
+
         // layers: [2, 5, 6, 6, 6, 6, 6, 6, 6, 5, 2]
         // layers: [2, 5, 15, 15, 15, 15, 5, 2]
     });
     
     DOM.learningRateOutput.innerHTML = brain.lr;
 
-    // Setting activation function for hiddens layer:
-    // brain.setHiddenLayerToActivation(brain.static_tanhActivation, brain.static_tanhDerivative);
-    // brain.setHiddenLayerToActivation(brain.static_sigmoidActivation, brain.static_sigmoidDerivative);
-    // brain.setHiddenLayerToActivation(brain.static_reluActivation, brain.static_reluDerivative);
-
-    
     ///////////////////////////////////////////
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-    {
-        setTimeout(function() {
-            var epochs = 100;
-            document.body.appendChild( brain.train(training_data_imported, epochs, true) );
-        }, 100);
-    }
-
-    ///////////////////////////////////////////
+        document.body.appendChild( brain.train(training_data_imported, 10, true) ); // second parameter is number of epochs
 
     document.body.appendChild( brain.createVisualization() );
 
