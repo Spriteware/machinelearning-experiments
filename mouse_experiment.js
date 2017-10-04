@@ -1,6 +1,23 @@
-const _CANVAS_WIDTH = 1000;
+const _CANVAS_WIDTH  = 1000;
 const _CANVAS_HEIGHT = 600;
-const _POINT_RADIUS = 8;
+const _POINT_RADIUS  = 8;
+
+var Utils = {
+    static: {}
+};
+
+Utils.static.exportTrainingData = function() {
+
+    console.info("Saving training data...", "Reading 'training_data'");
+
+    var output = document.createElement("textarea");
+    output.setAttribute("disabled", "disabled");
+    output.innerHTML = "var training_data_imported = " + JSON.stringify(training_data, null, '\t') + ";";
+
+    document.body.appendChild( output );
+
+    return "Export completed for " + training_data.length + " entries.";
+};
 
 function init() {
 
@@ -33,52 +50,27 @@ function init() {
 
 function update() {
 
-    // setTimeout(function() { update(); }, 1000/60);
     requestAnimationFrame(function() { update(); });
-
-    // if (!mouse.refresh)
-    //     return;
-    // mouse.refresh = false;
 
     var norm = _CANVAS_WIDTH; // Used for normalization
 
     ctx.clearRect(-_CANVAS_WIDTH / 2, -_CANVAS_HEIGHT / 2, _CANVAS_WIDTH, _CANVAS_HEIGHT);
     
-
     ///////////////////// OWN LIBRAIRY JS //////////////////
-    
 
     // Feeforward NN
     var inputs = [mouse.x / norm, mouse.y / norm];
     var targets = [mouse.x, mouse.y];
     var neurons = brain.feed(inputs);
 
+    // Build training data for future exportation
+    training_data.push({
+        inputs: inputs,
+        targets: targets
+    });
+
     if (DOM.backpropagationCheckbox.checked === true)
         brain.backpropagate(targets);
-        
-    //////////////////////// CONVNET JS ////////////////////
-
-    var x = new convnetjs.Vol(targets);
-
-    if (DOM.backpropagationCheckbox.checked === true)
-    {
-        var trainer = new convnetjs.SGDTrainer(net, 
-            {learning_rate:0.01, momentum:0.0, batch_size:1, l2_decay:0.001});
-        trainer.train(x, targets);
-    }
-
-    var predicted_values = net.forward(x);
-    DOM.convnetOutput.innerHTML = (predicted_values.w[0]).toFixed(3) + " " + (predicted_values.w[1]).toFixed(3);
-    
-    // Draw circle
-    ctx.save();
-    ctx.strokeStyle = "#d46363";
-    ctx.beginPath();
-    ctx.arc(predicted_values.w[0], predicted_values.w[1], 50, 0, Math.PI * 2, false);
-    ctx.stroke();
-    ctx.restore();
-
-    ////////////////////////////////////////////////////////
         
     // Draw mouse 
     ctx.beginPath();
@@ -94,11 +86,10 @@ function update() {
     DOM.globalError.innerHTML = (brain.globalError).toFixed(6);
 
     // Update Network SVG Vizualisation
-    brain.visualize(inputs, [1, 1]);
+    brain.visualize(inputs);
 }
 
-var DOM, ctx, mouse, brain;
-var net;
+var DOM, ctx, mouse, brain, training_data = [];
 
 window.onload = function() {
 
@@ -107,8 +98,6 @@ window.onload = function() {
         globalError: document.querySelector("#global_error span"),
         backpropagationCheckbox: document.querySelector("#backpropagate"),
         dropoutButton: document.querySelector("#dropout"),
-
-        convnetOutput: document.querySelector("#convnet")
     };
 
     ctx = DOM.canvas.getContext("2d");
@@ -142,22 +131,11 @@ window.onload = function() {
     // brain.setHiddenLayerToActivation(brain.static_sigmoidActivation, brain.static_sigmoidDerivative);
     // brain.setHiddenLayerToActivation(brain.static_reluActivation, brain.static_reluDerivative);
 
+    // Initial training
+    if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
+        document.body.appendChild( brain.train(training_data_imported, 1, true) ); // second parameter is number of epochs
+
     document.body.appendChild( brain.createVisualization() );
-
-
-    //////////////////////// CONVNET JS ////////////////////
-
-    var layer_defs = [];
-    layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
-    layer_defs.push({type:'fc', num_neurons:4, activation:'relu'});
-    layer_defs.push({type:'fc', num_neurons:4, activation:'relu'});
-    layer_defs.push({type:'fc', num_neurons:4, activation:'relu'});
-    layer_defs.push({type:'regression', num_neurons:2});
-    
-    net = new convnetjs.Net();
-    net.makeLayers(layer_defs);
-
-    ////////////////////////////////////////////////////
     
     init();
     update();
