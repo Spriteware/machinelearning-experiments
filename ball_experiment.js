@@ -197,6 +197,7 @@ function init() {
     });
 }
 
+
 function update() {
 
     requestAnimationFrame(function() { update(); });
@@ -226,6 +227,7 @@ function update() {
     // console.log( "-----" );
 
     // Build inputs / targets
+    // var inputs = [normalize(ball.acc[X]), normalize(ball.acc[Y]), outputs[X], outputs[Y]];
     var inputs = [normalize(ball.acc[X]), normalize(ball.acc[Y])];
     var targets = [normalize(gravity[X]), normalize(gravity[Y])];
     // training_data_max = training_data_max < Math.abs(inputs[X]) ? Math.abs(inputs[X]) : training_data_max;
@@ -234,6 +236,7 @@ function update() {
     // Feeforward NN with normalized inputs
     // var normalized_inputs = [inputs[X] / training_data_max, inputs[Y] / training_data_max];
     var neurons = brain.feed(inputs);
+    outputs = [neurons[X].output, neurons[Y].output];
 
     if (DOM.backpropagationCheckbox.checked === true)
         brain.backpropagate(targets);
@@ -278,8 +281,8 @@ function update() {
     ctx.fill();
     ctx.restore();
 
-    var x = unormalize(neurons[X].output);
-    var y = unormalize(neurons[Y].output);
+    var x = unormalize(outputs[X]);
+    var y = unormalize(outputs[Y]);
 
     // Draw ball acceleration
     if (neurons)
@@ -310,6 +313,7 @@ function update() {
 
 var DOM, ctx, mouse, ball, brain, time;
 var training_data = [], training_data_max = 0;
+var outputs = [0, 0];
 
 window.onload = function() {
 
@@ -328,27 +332,29 @@ window.onload = function() {
     mouse = {x: 1, y: 2, click: false, wheel: -Math.PI/2};
     ball = new Ball();
     brain = new Network({
-        lr: 0.0001,
+        lr: 0.00001,
         momentum: 0,
-        hiddenLayerFunction: "linear",
+        hiddenLayerFunction: "tanh",
         layers: [2, 5, 5, 2]
 
         // layers: [2, 5, 6, 6, 6, 6, 6, 6, 6, 5, 2]
         // layers: [2, 5, 15, 15, 15, 15, 5, 2]
     });
     
+
     DOM.learningRateOutput.innerHTML = brain.lr;
 
     ///////////////////////////////////////////
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-        document.body.appendChild( brain.train(training_data_imported, 10, true) ); // second parameter is number of epochs
+        document.body.appendChild( brain.train(training_data_imported, 200, true) ); // second parameter is number of epochs
 
     document.body.appendChild( brain.createVisualization() );
 
     init();
     update();
+
 };
 
 /*

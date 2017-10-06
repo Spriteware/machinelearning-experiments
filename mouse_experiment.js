@@ -106,16 +106,26 @@ window.onload = function() {
     mouse = {x: 1, y: 2, refresh: false};
     brain = new Network({
         momentum: 0.0,
-        // lr: 0.00005,
-        // layers: [2, 3, 2],
+
+        lr: 0.04,
+        layers: [2, 4, 2],
+        hiddenLayerFunction: "linear",
         
-        // # good-config 1: (activation function = linear)
-        // lr: 0.001,
+        // # good-config 1:
+        // lr: 0.005, // we can up to 0.1
         // layers: [2, 3, 2],
+        // hiddenLayerFunction: "linear",
         
-        // #good-config 2: (activation function = linear)
-        lr: 0.0005,
-        layers: [2, 4, 4, 4, 2],
+        
+        // #good-config 2:
+        // lr: 0.0005,
+        // layers: [2, 4, 4, 4, 2],
+        // hiddenLayerFunction: "linear",
+
+        // #not-so-good-but-okay-config 3: (using tanh)
+        // lr: 0.04,
+        // layers: [2, 4, 2], // layers ddoesn't change things too much
+        // hiddenLayerFunction: "tanh",
         
         // layers: [2, 4, 4, 4, 2],
         // layers: [2, 10, 2],
@@ -134,7 +144,7 @@ window.onload = function() {
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-        document.body.appendChild( brain.train(training_data_imported, 200, true) ); // second parameter is number of epochs
+        document.body.appendChild( brain.train(training_data_imported, 1500, true) ); // second parameter is number of epochs
 
     document.body.appendChild( brain.createVisualization() );
     
