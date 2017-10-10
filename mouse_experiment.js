@@ -2,6 +2,8 @@ const _CANVAS_WIDTH  = 1000;
 const _CANVAS_HEIGHT = 600;
 const _POINT_RADIUS  = 8;
 
+const _EPOCHS = 20;
+
 var Utils = {
     static: {}
 };
@@ -37,6 +39,14 @@ function init() {
         brain.dropout();
     });
 
+    DOM.trainButton.addEventListener("click", function(e) {
+        
+        // Initial training
+        if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
+            DOM.trainButton.parentElement.appendChild( brain.train(training_data_imported, _EPOCHS, true) ); // second parameter is number of epochs
+
+    });
+
     window.addEventListener("keydown", function(e) {
 
         if (e.keyCode === 32) // spacebar
@@ -47,8 +57,6 @@ function init() {
         }
     });
 }
-
-var norm = Math.sqrt(_CANVAS_WIDTH * _CANVAS_WIDTH + _CANVAS_HEIGHT * _CANVAS_HEIGHT);
 
 function update() {
 
@@ -91,6 +99,7 @@ function update() {
 }
 
 var DOM, ctx, mouse, brain, training_data = [];
+var norm = Math.sqrt(_CANVAS_WIDTH * _CANVAS_WIDTH + _CANVAS_HEIGHT * _CANVAS_HEIGHT) / 2;
 
 window.onload = function() {
 
@@ -98,6 +107,7 @@ window.onload = function() {
         canvas: document.querySelector("canvas"),
         globalError: document.querySelector("#global_error span"),
         backpropagationCheckbox: document.querySelector("#backpropagate"),
+        trainButton: document.querySelector("#train"),
         dropoutButton: document.querySelector("#dropout"),
     };
 
@@ -107,8 +117,8 @@ window.onload = function() {
     brain = new Network({
         momentum: 0.0,
 
-        lr: 0.04,
-        layers: [2, 4, 2],
+        lr: 0.1,
+        layers: [2, 2, 2],
         hiddenLayerFunction: "linear",
         
         // # good-config 1:
@@ -142,10 +152,6 @@ window.onload = function() {
     // brain.setHiddenLayerToActivation(brain.static_sigmoidActivation, brain.static_sigmoidDerivative);
     // brain.setHiddenLayerToActivation(brain.static_reluActivation, brain.static_reluDerivative);
 
-    // Initial training
-    if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-        document.body.appendChild( brain.train(training_data_imported, 1500, true) ); // second parameter is number of epochs
-
     document.body.appendChild( brain.createVisualization() );
     
     init();
@@ -154,13 +160,9 @@ window.onload = function() {
 
 
 /*
-    Observation relative à l'utilisation d'une acivation function :
-    - Sans l'activation function, les coordonnées sont vraiment réparties un peu partout sur chaque neuron
-    - Avec l'activation function tanh() sur un hidden layer, on voit alors bien le "chemin" eumprunté par les valeurs
-        puisque les sorties des neurons sont soit -1 ou 1  (testé par exemple avec [2, 3, 3])
-    UPDATE: je sais pas trop en fait. Difficile de se faire une idée su l'activation fonction.
-    en tout cas le learning rate, lui est magique. Il suffit de l'ajuster un peu pour voir clairement les performance changer,
-    et ce peu importer l'activation fonction j'ai l'impression
+    NOTES
+    ------------
+    Le learning rate est magique, il suffit de le changer un peu pour influence complètement les performances.
 
     Dans les deux cas l'erreur globale devien ttrès faible.
     Je trouve que sans activation function le résultat est plus smooth. C'est surement parce que ce genre d'activation permet surtout des classfication,
