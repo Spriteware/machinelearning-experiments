@@ -67,8 +67,8 @@ function update() {
     ///////////////////// OWN LIBRAIRY JS //////////////////
 
     // Feeforward NN
-    var inputs = [mouse.x / norm, mouse.y / norm];
-    var targets = [mouse.x / norm, mouse.y / norm];
+    var inputs = [mouse.x / norm_x, mouse.y / norm_y];
+    var targets = [mouse.x / norm_x, mouse.y / norm_y];
     // var targets = [mouse.x, mouse.y];
     var neurons = brain.feed(inputs);
 
@@ -88,7 +88,7 @@ function update() {
 
     // Draw circle
     ctx.beginPath();
-    ctx.arc(neurons[0].output * norm, neurons[1].output * norm, 50, 0, Math.PI * 2, false);
+    ctx.arc(neurons[0].output * norm_x, neurons[1].output * norm_y, 50, 0, Math.PI * 2, false);
     ctx.stroke();
 
     // Update global error display
@@ -100,6 +100,8 @@ function update() {
 
 var DOM, ctx, mouse, brain, training_data = [];
 var norm = Math.sqrt(_CANVAS_WIDTH * _CANVAS_WIDTH + _CANVAS_HEIGHT * _CANVAS_HEIGHT) / 2;
+var norm_x = _CANVAS_WIDTH / 2;
+var norm_y = _CANVAS_HEIGHT / 2;
 
 window.onload = function() {
 
@@ -117,9 +119,9 @@ window.onload = function() {
     brain = new Network({
         momentum: 0.0,
 
-        lr: 0.1,
-        layers: [2, 2, 2],
-        hiddenLayerFunction: "linear",
+        // lr: 0.1,
+        // layers: [2, 2, 2],
+        // hiddenLayerFunction: "linear",
         
         // # good-config 1:
         // lr: 0.005, // we can up to 0.1
@@ -128,9 +130,9 @@ window.onload = function() {
         
         
         // #good-config 2:
-        // lr: 0.0005,
-        // layers: [2, 4, 4, 4, 2],
-        // hiddenLayerFunction: "linear",
+        lr: 0.005,
+        layers: [2, 4, 4, 4, 2],
+        hiddenLayerFunction: "linear",
 
         // #not-so-good-but-okay-config 3: (using tanh)
         // lr: 0.04,
