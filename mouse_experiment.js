@@ -2,7 +2,7 @@ const _CANVAS_WIDTH  = 1000;
 const _CANVAS_HEIGHT = 600;
 const _POINT_RADIUS  = 8;
 
-const _EPOCHS = 20;
+const _EPOCHS = 2000;
 
 var Utils = {
     static: {}
@@ -119,9 +119,9 @@ window.onload = function() {
     brain = new Network({
         momentum: 0.0,
 
-        // lr: 0.1,
-        // layers: [2, 2, 2],
-        // hiddenLayerFunction: "linear",
+        lr: 0.001,
+        layers: [2, 3, 3, 2],
+        hiddenLayerFunction: "linear",
         
         // # good-config 1:
         // lr: 0.005, // we can up to 0.1
@@ -130,14 +130,19 @@ window.onload = function() {
         
         
         // #good-config 2:
-        lr: 0.005,
-        layers: [2, 4, 4, 4, 2],
-        hiddenLayerFunction: "linear",
+        // lr: 0.0005,
+        // layers: [2, 4, 4, 4, 2],
+        // hiddenLayerFunction: "linear",
 
         // #not-so-good-but-okay-config 3: (using tanh)
         // lr: 0.04,
         // layers: [2, 4, 2], // layers ddoesn't change things too much
         // hiddenLayerFunction: "tanh",
+
+        // #good-config 4, epochs=200
+        // lr: 0.001,
+        // layers: [2, 6, 6, 6, 6, 6, 6, 6, 6, 6, 2],
+        // hiddenLayerFunction: "linear",
         
         // layers: [2, 4, 4, 4, 2],
         // layers: [2, 10, 2],
