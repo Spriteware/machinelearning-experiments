@@ -8,11 +8,11 @@ const _POINT_RADIUS = 8;
 
 const _epochs = 200;
 const _params = {
-    libURI: "http://localhost/machinelearning/neural-network.js",
+    libURI: "http://localhost/machinelearning/lib/neural-network.js",
     hiddenLayerFunction: "linear",
     momentum: 0.0,
-    lr: 0.001,
-    layers: [2, 3, 3, 2],
+    lr: 0.05,
+    layers: [2, 3, 2],
 
     // layers: [2, 4, 4, 4, 2],
     // layers: [2, 5, 1, 5, 2]
@@ -23,24 +23,6 @@ const _params = {
 };
 
 //////////////////////
-
-var Utils = {
-    static: {}
-};
-
-Utils.static.exportTrainingData = function() {
-
-    // Fonction used in console
-    console.info("Saving training data...", "Reading 'training_data'");
-
-    var output = document.createElement("textarea");
-    output.setAttribute("disabled", "disabled");
-    output.innerHTML = "var training_data_imported = \"" + training_data + "\";";
-
-    document.body.appendChild( output );
-
-    return "Export completed for " + training_size + " entries.";
-};
 
 function init() {
 
@@ -82,25 +64,38 @@ function init() {
 
 function update() {
 
+    if (safe !== true) {
+        console.info("Script successfully stopped");
+        return;
+    }
+
     requestAnimationFrame(function() { update(); });
     ctx.clearRect(-_CANVAS_WIDTH / 2, -_CANVAS_HEIGHT / 2, _CANVAS_WIDTH, _CANVAS_HEIGHT);
     
     ///////////////////// OWN LIBRAIRY JS //////////////////
 
     // Feeforward NN
-    var inputs = [mouse.x / norm_x, mouse.y / norm_y];
-    var targets = [mouse.x / norm_x, mouse.y / norm_y];
-    var neurons = brain.feed(inputs);
+    try {
 
-    // Build training data (as string) for future exportation
-    if (training_size <= _TRAINING_SIZE_MAX) {
-        training_data += inputs[0] + " " + inputs[1] + " : " + targets[0] + " " + targets[1] + "\\\n"; 
-        training_size++;
+        var inputs = [mouse.x / norm_x, mouse.y / norm_y];
+        var targets = [mouse.x / norm_x, mouse.y / norm_y];
+        var neurons = brain.feed(inputs);
+
+        // Build training data (as string) for future exportation
+        if (training_size <= _TRAINING_SIZE_MAX) {
+            training_data += inputs[0] + " " + inputs[1] + " : " + targets[0] + " " + targets[1] + "\\\n"; 
+            training_size++;
+        }
+
+        if (DOM.backpropagationCheckbox.checked === true)
+            brain.backpropagate(targets);
+    
+    } catch(ex) {
+        safe = false;
+        console.error(ex);
+        return;
     }
-
-    if (DOM.backpropagationCheckbox.checked === true)
-        brain.backpropagate(targets);
-        
+            
     // Draw mouse 
     ctx.beginPath();
     ctx.arc(mouse.x, mouse.y, _POINT_RADIUS, 0, Math.PI * 2, false);
@@ -118,7 +113,7 @@ function update() {
     brain.visualize(inputs);
 }
 
-var DOM, ctx, mouse, brain, training_data = "", training_size = 0;
+var safe = true, DOM, ctx, mouse, brain, training_data = "", training_size = 0;
 var norm_x = _CANVAS_WIDTH / 2;
 var norm_y = _CANVAS_HEIGHT / 2;
 

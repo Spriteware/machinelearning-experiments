@@ -1,5 +1,10 @@
+// Canvas and visualisation related constants
 const _CANVAS_WIDTH = 1400;
 const _CANVAS_HEIGHT = 800;
+const _SHAPE_SCALING = 100;
+const _SHAPE_PADDING = 200;
+
+// Physics related constants
 const _WHEEL_STEP = 20;
 const _BALL_RADIUS = 40;
 const _BALL_MASS = 50;
@@ -13,30 +18,17 @@ const _K = 0.1;
 
 const X = 0, Y = 1;
 
-var Utils = {
-    static: {}
-};
-
-Utils.static.norm = function(x, y) {
-
-    return Math.sqrt( x*x + y*y );
-};
-
-Utils.static.exportTrainingData = function() {
-
-    console.info("Saving training data...", "Reading 'training_data'");
-
-    var output = document.createElement("textarea");
-    output.setAttribute("disabled", "disabled");
-    output.innerHTML = "var training_data_imported = " + JSON.stringify(training_data, null, '\t') + ";";
-
-    document.body.appendChild( output );
-
-    return "Export completed for " + training_data.length + " entries.";
+// Brain hyperparameters
+const _epochs = 100;
+const _params = {
+    libURI: "http://localhost/machinelearning/lib/neural-network.js",
+    lr: 0.001,
+    momentum: 0,
+    hiddenLayerFunction: "relu",
+    layers: [2, 4, 4, 2]
 };
 
 //////////////////////////////////////////////
-
 
 var Ball = function(params) {
     
@@ -129,8 +121,19 @@ Ball.prototype.update = function(dt, follow) {
     }
 };
 
-//////////////////////////////////////////////
+function euclidian_distance(x, y) {
+    return Math.sqrt( x*x + y*y );
+}
 
+function normalize(x) {
+    return x > 0 ? Math.sqrt(x / 10) : -Math.sqrt(-x / 10);
+}
+
+function unormalize(x) {
+    return x * x * 10;
+}
+
+//////////////////////////////////////////////
 
 function init() {
 
@@ -197,55 +200,34 @@ function init() {
     });
 }
 
-
 function update() {
 
     requestAnimationFrame(function() { update(); });
-    // setTimeout(function() { update(); }, 100);
 
-    var SCALING = 100, PADDING = 200;
     var now = Date.now(), dt = now - time;
     var gravity = ball.gravity(mouse.wheel);
-    
+
+    dt = dt > 50 ? 50 : dt; // temporary fix for bouncing due to changing tab
+
     // Update ball coords at high frqency
     time = now;
     ball.update(dt, mouse.click);
 
     //////////////////////////////////////////
 
-    var normalize = function(x) {
-        return x > 0 ? Math.sqrt(x / 10) : -Math.sqrt(-x / 10);
-    };
-
-    var unormalize = function(x) {
-        return x * x * 10;
-    };
-
-    // console.clear();
-    // console.log( ball.acc[X], ball.acc[Y] );
-    // console.log( normalize(ball.acc[X]), normalize(ball.acc[Y]) );
-    // console.log( "-----" );
-
     // Build inputs / targets
-    // var inputs = [normalize(ball.acc[X]), normalize(ball.acc[Y]), outputs[X], outputs[Y]];
     var inputs = [normalize(ball.acc[X]), normalize(ball.acc[Y])];
     var targets = [normalize(gravity[X]), normalize(gravity[Y])];
-    // training_data_max = training_data_max < Math.abs(inputs[X]) ? Math.abs(inputs[X]) : training_data_max;
-    // training_data_max = training_data_max < Math.abs(inputs[Y]) ? Math.abs(inputs[Y]) : training_data_max;
     
     // Feeforward NN with normalized inputs
-    // var normalized_inputs = [inputs[X] / training_data_max, inputs[Y] / training_data_max];
     var neurons = brain.feed(inputs);
-    outputs = [neurons[X].output, neurons[Y].output];
+    outputs = [unormalize(neurons[X].output), unormalize(neurons[Y].output)];
+    
+    // Build training data (as string) for future exportation
+    Utils.static.addIntoTraining(inputs, targets);
 
     if (DOM.backpropagationCheckbox.checked === true)
         brain.backpropagate(targets);
-
-    // Build training data for future exportation
-    training_data.push({
-        inputs: inputs,
-        targets: targets
-    });
 
     // Update global error display
     DOM.globalError.innerHTML = (brain.globalError * _CANVAS_WIDTH).toFixed(6);
@@ -257,7 +239,7 @@ function update() {
     
     ctx.clearRect(-_CANVAS_WIDTH / 2, -_CANVAS_HEIGHT / 2, _CANVAS_WIDTH, _CANVAS_HEIGHT);
 
-    var d1 = Utils.static.norm(gravity[X], gravity[Y]), d2 = Utils.static.norm(ball.acc[X], ball.acc[Y]);
+    var d1 = euclidian_distance(gravity[X], gravity[Y]), d2 = euclidian_distance(ball.acc[X], ball.acc[Y]);
 
     // Draw gravity
     ctx.save();
@@ -265,7 +247,7 @@ function update() {
     ctx.rotate(-Math.atan2(gravity[X], gravity[Y]));
     ctx.beginPath();
     ctx.moveTo(-10, 0);
-    ctx.lineTo(0, SCALING * d1 + PADDING);
+    ctx.lineTo(0, _SHAPE_SCALING * d1 + _SHAPE_PADDING);
     ctx.lineTo(10, 0);
     ctx.fill();
     ctx.restore();
@@ -276,7 +258,7 @@ function update() {
     ctx.rotate(-Math.atan2(ball.acc[X], ball.acc[Y]));
     ctx.beginPath();
     ctx.moveTo(-10, 0);
-    ctx.lineTo(0, SCALING * d2 + (d1 > d2 ? PADDING * d2 / d1 : PADDING) );
+    ctx.lineTo(0, _SHAPE_SCALING * d2 + (d1 > d2 ? _SHAPE_PADDING * d2 / d1 : _SHAPE_PADDING) );
     ctx.lineTo(10, 0);
     ctx.fill();
     ctx.restore();
@@ -287,14 +269,14 @@ function update() {
     // Draw ball acceleration
     if (neurons)
     {
-        var d3 = Utils.static.norm(x, y);
+        var d3 = euclidian_distance(x, y);
 
         ctx.save();
         ctx.fillStyle = "purple";
         ctx.rotate(-Math.atan2(x, y));
         ctx.beginPath();
         ctx.moveTo(-10, 0);
-        ctx.lineTo(0, SCALING * d3 + PADDING );
+        ctx.lineTo(0, _SHAPE_SCALING * d3 + _SHAPE_PADDING );
         ctx.lineTo(10, 0);
         ctx.fill();
         ctx.restore();   
@@ -312,7 +294,6 @@ function update() {
 
 
 var DOM, ctx, mouse, ball, brain, time;
-var training_data = [], training_data_max = 0;
 var outputs = [0, 0];
 
 window.onload = function() {
@@ -331,24 +312,15 @@ window.onload = function() {
     time = Date.now();
     mouse = {x: 1, y: 2, click: false, wheel: -Math.PI/2};
     ball = new Ball();
-    brain = new Network({
-        lr: 0.00001,
-        momentum: 0,
-        hiddenLayerFunction: "tanh",
-        layers: [2, 5, 5, 2]
-
-        // layers: [2, 5, 6, 6, 6, 6, 6, 6, 6, 5, 2]
-        // layers: [2, 5, 15, 15, 15, 15, 5, 2]
-    });
+    brain = new Network(_params);
     
-
     DOM.learningRateOutput.innerHTML = brain.lr;
 
     ///////////////////////////////////////////
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-        document.body.appendChild( brain.train(training_data_imported, 200, true) ); // second parameter is number of epochs
+        document.body.appendChild( brain.train(training_data_imported, _epochs, true) ); // second parameter is number of epochs
 
     document.body.appendChild( brain.createVisualization() );
 
@@ -357,26 +329,10 @@ window.onload = function() {
 
 };
 
-/*
-
-    Observation 1: lorsque je drag la ball avec la souris, l'accélération augmente de ouf et donc l'erreur globale aussi.
-    Si je restreint le learning rate, alors le réseau n'apprend rien de manière générale.
-    Il faut trouver comment limiter l'explosition des erreurs et des weights. Je cherche vers la régularization des weights, notemment weight penalty L2
-    Lecture avec explications: http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec9.pdf
-
-    Explications activations functions et regularization: 
-    http://lamda.nju.edu.cn/weixs/project/CNNTricks/CNNTricks.html
-
-    Observation 2: j'arrive à un point mort ou je ne peux pas extraire la composante de gravité de l'accélération, surtout après un drag de souris
-    je viens de finir de mettre en place la possibilité d'entraîner avec un training set au préalable, et plusieurs fois (_EPOCHS fois) + l'affichage de l'erreur globale
-    sur un graphique. Etant donné que le but est d'avoir l'erreur globale qui tend vers 0, le graphique doit me montrer une courbe qui tend vers 0
-    Seulement ce n'est pas le cas l'algorithme apprend au début mais rapidement tend vers une moyenne. 
-    Chaque époque créé un pic puis une décroissance exponentielle vers 0: l'algorithme n'apprend pas du training set vu qu'à chaque fois en revoyant celui-ci, l'erreur globale regrimpe!
-    -- J'ai pourtant mis en places les solutions suivantes :
-    * Varier le learning rate
-    * Varier le nombre d'époques
-    * Agrandir le training set de 3K à 8K
-    * Agrandir la deepness (9 hidden layers)
-    * Agrandir le nombre de neurons par layer (jusqu'à 20 sans broncher!)
-
-*/ 
+/* TODO
+    - mouse scroll is not the same in Firefox as in Chrome
+    - neuralNetLib: hover on visualisation bugs ? 
+    - implémenter PReLu
+    - checker que'est-ce qui bouffe des perfs ?
+    - mettre à jour le viewer avec l'échelle à gauche ?
+*/
