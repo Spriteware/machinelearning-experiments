@@ -22,10 +22,11 @@ const X = 0, Y = 1;
 const _epochs = 100;
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
-    lr: 0.001,
     momentum: 0,
-    hiddenLayerFunction: "relu",
-    layers: [2, 4, 4, 2]
+    lr: 0.001,
+    layers: [2, 4, 4, 2],
+    activation: "prelu",
+    activationParams: {alpha: 0.01}
 };
 
 //////////////////////////////////////////////
@@ -320,19 +321,22 @@ window.onload = function() {
 
     // Initial training
     if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-        document.body.appendChild( brain.train(training_data_imported, _epochs, true) ); // second parameter is number of epochs
+    {
+        // document.body.appendChild(brain.train({
+        //     data: training_data_imported,
+        //     epochs: _epochs,
+        //     visualize: true,
+        //     recurrent: true
+        // }));
+    }
 
     document.body.appendChild( brain.createVisualization() );
 
     init();
     update();
-
 };
 
 /* TODO
     - mouse scroll is not the same in Firefox as in Chrome
-    - neuralNetLib: hover on visualisation bugs ? 
     - implémenter PReLu
-    - checker que'est-ce qui bouffe des perfs ?
-    - mettre à jour le viewer avec l'échelle à gauche ?
 */

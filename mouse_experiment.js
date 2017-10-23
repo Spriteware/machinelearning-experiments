@@ -9,7 +9,7 @@ const _POINT_RADIUS = 8;
 const _epochs = 200;
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
-    hiddenLayerFunction: "linear",
+    activation: "linear",
     momentum: 0.0,
     lr: 0.05,
     layers: [2, 3, 2],
