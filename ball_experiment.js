@@ -19,14 +19,15 @@ const _K = 0.1;
 const X = 0, Y = 1;
 
 // Brain hyperparameters
-const _epochs = 100;
+const _epochs = 1500;
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
     momentum: 0,
-    lr: 0.001,
-    layers: [2, 4, 4, 2],
+    lr: 0.005,
+    layers: [4, 3, 2],
+    // layers: [6, 6, 5, 4, 3, 2, 2],
     activation: "prelu",
-    activationParams: {alpha: 0.01}
+    activationParams: {alpha: 0.1}
 };
 
 //////////////////////////////////////////////
@@ -127,11 +128,31 @@ function euclidian_distance(x, y) {
 }
 
 function normalize(x) {
-    return x > 0 ? Math.sqrt(x / 10) : -Math.sqrt(-x / 10);
+    return x > 0 ? 1 - 1 / ((x + 1) * (x + 1)) : -1 + 1 / ((x + 1) * (x + 1));
+    // return x > 0 ? Math.sqrt(x / 10) : -Math.sqrt(-x / 10);
 }
 
 function unormalize(x) {
-    return x * x * 10;
+    return x > 0 ? Math.sqrt(1 / 1 - x) - 1 : Math.sqrt(1 / 1 + x) - 1;
+    // return x * x * 10;
+}
+
+function normalize_gravity(gravity_vector) {
+
+    var norm = Math.sqrt( (gravity_vector[X]*gravity_vector[X]) + (gravity_vector[Y]*gravity_vector[Y]) );
+    var x = gravity_vector[X] / norm;
+    var y = gravity_vector[Y] / norm;
+
+    return [x, y];
+}
+
+function filter(x) {
+    if (x > 1.2)
+        return 1.2
+    else if (x < -1.2)
+        return -1.2;
+    else
+        return x;
 }
 
 //////////////////////////////////////////////
@@ -199,9 +220,31 @@ function init() {
         brain.lr = 1 / (e.target.value * e.target.value + 1);
         DOM.learningRateOutput.innerHTML = brain.lr.toFixed(8);
     });
+
+    DOM.trainButton.addEventListener("click", function(e) {
+        
+        // Initial training
+        if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
+        {
+            DOM.trainButton.parentElement.appendChild(brain.train({
+                data: training_data_imported,
+                epochs: _epochs,
+                visualize: true,
+                recurrent: false
+            }));
+        }
+        else  {
+            alert("No training data available");
+        }
+    });
 }
 
 function update() {
+
+    if (safe !== true) {
+        console.info("Script successfully stopped");
+        return;
+    }
 
     requestAnimationFrame(function() { update(); });
 
@@ -216,25 +259,45 @@ function update() {
 
     //////////////////////////////////////////
 
-    // Build inputs / targets
-    var inputs = [normalize(ball.acc[X]), normalize(ball.acc[Y])];
-    var targets = [normalize(gravity[X]), normalize(gravity[Y])];
-    
-    // Feeforward NN with normalized inputs
-    var neurons = brain.feed(inputs);
-    outputs = [unormalize(neurons[X].output), unormalize(neurons[Y].output)];
-    
-    // Build training data (as string) for future exportation
-    Utils.static.addIntoTraining(inputs, targets);
+    // Feedforward NN
+    try {
 
-    if (DOM.backpropagationCheckbox.checked === true)
-        brain.backpropagate(targets);
+        // Build inputs / targets
+        var ball_acc = [normalize(ball.acc[X]), normalize(ball.acc[Y])];
+        var diff = [ball_acc[0] - prev_ball_acc[0], ball_acc[1] - prev_ball_acc[1]];
+        prev_ball_acc = ball_acc;
+
+        // If we don't apply a threshold, our values can go exponentially up on non-correctly trained NN
+        var input_outputs = [filter(brain.output[X]), filter(brain.output[Y])];
+
+        var inputs = ball_acc.concat(diff);
+        var inputs_n_recurrence = inputs;
+        // var inputs_n_recurrence = inputs.concat(input_outputs);
+
+        var normalized_g = normalize_gravity(gravity);
+        var targets = [normalized_g[X], normalized_g[Y]];
+        
+        // Feeforward NN with normalized inputs
+        var neurons = brain.feed(inputs_n_recurrence);
+        outputs = [unormalize(neurons[X].output), unormalize(neurons[Y].output)];
+        
+        // Build training data (as string) for future exportation
+        Utils.static.addIntoTraining(inputs, targets);
+
+        if (DOM.backpropagationCheckbox.checked === true)
+            brain.backpropagate(targets);
+
+    } catch(ex) {
+        safe = false;
+        console.error(ex);
+        return;
+    }
 
     // Update global error display
     DOM.globalError.innerHTML = (brain.globalError * _CANVAS_WIDTH).toFixed(6);
     
     // Update Network SVG Vizualisation
-    brain.visualize(inputs);
+    brain.visualize(inputs_n_recurrence);
 
     //////////////////////////////////////////
     
@@ -267,7 +330,7 @@ function update() {
     var x = unormalize(outputs[X]);
     var y = unormalize(outputs[Y]);
 
-    // Draw ball acceleration
+    // Draw output gravity
     if (neurons)
     {
         var d3 = euclidian_distance(x, y);
@@ -289,23 +352,30 @@ function update() {
     ctx.stroke();
 
     // Update acceleration output
-    DOM.accelerationOutputs[X].innerHTML = (inputs[X]).toFixed(4);
-    DOM.accelerationOutputs[Y].innerHTML = (inputs[Y]).toFixed(4);
+    DOM.accelerationOutputs[0].innerHTML = ball.acc[X].toFixed(4) + " / " + ball.acc[Y].toFixed(4);
+    DOM.accelerationOutputs[1].innerHTML = ball_acc[X].toFixed(4) + " / " + ball_acc[Y].toFixed(4);
+
+    // Update gravity output
+    DOM.gravityOutputs[0].innerHTML = gravity[X].toFixed(4) + " / " + gravity[Y].toFixed(4);
+    DOM.gravityOutputs[1].innerHTML = normalized_g[X].toFixed(4) + " / " + normalized_g[Y].toFixed(4);
 }
 
-
-var DOM, ctx, mouse, ball, brain, time;
+var safe = true, DOM, ctx, mouse, ball, brain, time;
 var outputs = [0, 0];
+var prev_ball_acc = [0, 0]
 
 window.onload = function() {
 
     DOM = {
         playground: document.querySelector("#playground"),
         accelerationOutputs: document.querySelectorAll("#acceleration_outputs span"),
+        gravityOutputs: document.querySelectorAll("#gravity_outputs span"),
         globalError: document.querySelector("#global_error span"),
         backpropagationCheckbox: document.querySelector("#backpropagate"),  
         learningRateRange: document.querySelector("#learning_rate input[type='range']"),
-        learningRateOutput: document.querySelector("#learning_rate span")
+        learningRateOutput: document.querySelector("#learning_rate span"),
+        trainButton: document.querySelector("#train"),
+        dropoutButton: document.querySelector("#dropout"),
     };
 
     ctx = DOM.playground.getContext("2d");
@@ -318,17 +388,6 @@ window.onload = function() {
     DOM.learningRateOutput.innerHTML = brain.lr;
 
     ///////////////////////////////////////////
-
-    // Initial training
-    if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-    {
-        // document.body.appendChild(brain.train({
-        //     data: training_data_imported,
-        //     epochs: _epochs,
-        //     visualize: true,
-        //     recurrent: true
-        // }));
-    }
 
     document.body.appendChild( brain.createVisualization() );
 
