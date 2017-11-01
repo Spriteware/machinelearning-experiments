@@ -19,14 +19,14 @@ const _K = 0.1;
 const X = 0, Y = 1;
 
 // Brain hyperparameters
-const _epochs = 1500;
+const _epochs = 5;
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
     momentum: 0,
     lr: 0.005,
     layers: [4, 3, 2],
     // layers: [6, 6, 5, 4, 3, 2, 2],
-    activation: "prelu",
+    activation: "linear",
     activationParams: {alpha: 0.1}
 };
 
@@ -128,13 +128,11 @@ function euclidian_distance(x, y) {
 }
 
 function normalize(x) {
-    return x > 0 ? 1 - 1 / ((x + 1) * (x + 1)) : -1 + 1 / ((x + 1) * (x + 1));
-    // return x > 0 ? Math.sqrt(x / 10) : -Math.sqrt(-x / 10);
+    return x >= 0 ? 1 - 1 / ((x + 1) * (x + 1)) : -1 + 1 / ((x - 1) * (x - 1));
 }
 
 function unormalize(x) {
-    return x > 0 ? Math.sqrt(1 / 1 - x) - 1 : Math.sqrt(1 / 1 + x) - 1;
-    // return x * x * 10;
+    return x >= 0 ? Math.sqrt(1 / (1 - x)) - 1 : -Math.sqrt(1 / (1 + x)) + 1;
 }
 
 function normalize_gravity(gravity_vector) {
@@ -202,8 +200,15 @@ function init() {
     DOM.playground.addEventListener("wheel", function(e) {
 
         e.preventDefault();
-        mouse.wheel += e.deltaY / _WHEEL_STEP / 180 * Math.PI;
+
+        // Firefox deltaY returns lines instead of pixels
+        var delta = e.deltaMode !== 0x00 ? e.deltaY * 40 : e.deltaY; 
+        mouse.wheel += delta / _WHEEL_STEP / 180 * Math.PI;
     });
+
+    var wheelEvent = new WheelEvent("wheel", {deltaMode: 0x00});
+    
+    
 
     window.addEventListener("keydown", function(e) {
         
@@ -227,7 +232,7 @@ function init() {
         if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
         {
             DOM.trainButton.parentElement.appendChild(brain.train({
-                data: training_data_imported,
+                data: Utils.static.parseTrainingData(training_data_imported),
                 epochs: _epochs,
                 visualize: true,
                 recurrent: false
@@ -393,9 +398,9 @@ window.onload = function() {
 
     init();
     update();
+
 };
 
 /* TODO
-    - mouse scroll is not the same in Firefox as in Chrome
-    - implémenter PReLu
+    -
 */

@@ -6,7 +6,7 @@ const _CANVAS_HEIGHT = 600;
 const _CIRCLE_RADIUS = 50;
 const _POINT_RADIUS = 8;
 
-const _epochs = 200;
+const _epochs = 5;
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
     activation: "linear",
@@ -24,6 +24,15 @@ const _params = {
 };
 
 //////////////////////
+
+function normalize(x) {
+    return x >= 0 ? 1 - 1 / ((x + 1) * (x + 1)) : -1 + 1 / ((x - 1) * (x - 1));
+}
+
+function unormalize(x) {
+    return x >= 0 ? Math.sqrt(1 / (1 - x)) - 1 : -Math.sqrt(1 / (1 + x)) + 1;
+}
+
 
 function init() {
 
@@ -46,10 +55,16 @@ function init() {
     DOM.trainButton.addEventListener("click", function(e) {
         
         // Initial training
-        if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined)
-            DOM.trainButton.parentElement.appendChild( brain.train(training_data_imported, _epochs, true) ); // second parameter is number of epochs
-        else 
+        if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined) {
+            DOM.trainButton.parentElement.appendChild(brain.train({
+                data: Utils.static.parseTrainingData(training_data_imported),
+                epochs: _epochs,
+                visualize: true
+            }));
+        }
+        else {
             alert("No training data available");
+        }
     });
 
     window.addEventListener("keydown", function(e) {
@@ -78,18 +93,17 @@ function update() {
     // Feeforward NN
     try {
 
-        var inputs = [mouse.x / norm_x, mouse.y / norm_y];
-        var targets = [mouse.x / norm_x, mouse.y / norm_y];
+        var inputs = [normalize(mouse.x / norm_x), normalize(mouse.y / norm_y)];
+        var targets = [normalize(mouse.x / norm_x), normalize(mouse.y / norm_y)];
+        // var inputs = [mouse.x / norm_x, mouse.y / norm_y];
+        // var targets = [mouse.x / norm_x, mouse.y / norm_y];
         var neurons = brain.feed(inputs);
-
-        // Build training data (as string) for future exportation
-        if (training_size <= _TRAINING_SIZE_MAX) {
-            training_data += inputs[0] + " " + inputs[1] + " : " + targets[0] + " " + targets[1] + "\\\n"; 
-            training_size++;
-        }
 
         if (DOM.backpropagationCheckbox.checked === true)
             brain.backpropagate(targets);
+
+        // Build training data (as string) for future exportation
+        Utils.static.addIntoTraining(inputs, targets);
     
     } catch(ex) {
         safe = false;
@@ -104,7 +118,8 @@ function update() {
 
     // Draw circle
     ctx.beginPath();
-    ctx.arc(neurons[0].output * norm_x, neurons[1].output * norm_y, _CIRCLE_RADIUS, 0, Math.PI * 2, false);
+    // ctx.arc(neurons[0].output * norm_x, neurons[1].output * norm_y, _CIRCLE_RADIUS, 0, Math.PI * 2, false);
+    ctx.arc(unormalize(neurons[0].output) * norm_x, unormalize(neurons[1].output) * norm_y, _CIRCLE_RADIUS, 0, Math.PI * 2, false);
     ctx.stroke();
 
     // Update global error display
@@ -114,7 +129,7 @@ function update() {
     brain.visualize(inputs);
 }
 
-var safe = true, DOM, ctx, mouse, brain, training_data = "", training_size = 0;
+var safe = true, DOM, ctx, mouse, brain;
 var norm_x = _CANVAS_WIDTH / 2;
 var norm_y = _CANVAS_HEIGHT / 2;
 
