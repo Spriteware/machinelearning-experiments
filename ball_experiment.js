@@ -14,19 +14,24 @@ const _GAME_GRAVITY = 0.1;
 const _SPRING_MAX_THRESHOLD = 25;
 const _SPRING_AIR_FRICTION = 3.5;
 const _NORMAL_AIR_FRICTION = 0.001;
-const _K = 0.1;
+const _K = 0.08;
 
 const X = 0, Y = 1;
 
 // Brain hyperparameters
-const _epochs = 5;
-const _params = {
+var _epochs = 51;
+var _dropout = false;
+var _recurrent = false;
+
+const  _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
-    momentum: 0,
-    lr: 0.005,
-    layers: [4, 3, 2],
+    lr: 0.05,
+    layers: _recurrent ? [102, 10, 5, 2] : [100, 5, 2] ,
+    // layers: [4, 6, 6, 4, 4, 2],
     // layers: [6, 6, 5, 4, 3, 2, 2],
-    activation: "linear",
+    optimizer: "adagrad",
+    optimizerParams: {alpha: 0.85, beta1: 0.9, beta2: 0.99}, // 0.9 decay for adadelta
+    activation: "prelu",
     activationParams: {alpha: 0.1}
 };
 
@@ -128,11 +133,14 @@ function euclidian_distance(x, y) {
 }
 
 function normalize(x) {
+    var k = 2.5; // seems that this value could be cool
+    x *= k;
     return x >= 0 ? 1 - 1 / ((x + 1) * (x + 1)) : -1 + 1 / ((x - 1) * (x - 1));
 }
 
 function unormalize(x) {
-    return x >= 0 ? Math.sqrt(1 / (1 - x)) - 1 : -Math.sqrt(1 / (1 + x)) + 1;
+    var k = 2.5;
+    return (x >= 0 ? Math.sqrt(1 / (1 - x)) - 1 : -Math.sqrt(1 / (1 + x)) + 1) * 1 / k;
 }
 
 function normalize_gravity(gravity_vector) {
@@ -146,7 +154,7 @@ function normalize_gravity(gravity_vector) {
 
 function filter(x) {
     if (x > 1.2)
-        return 1.2
+        return 1.2;
     else if (x < -1.2)
         return -1.2;
     else
@@ -202,13 +210,11 @@ function init() {
         e.preventDefault();
 
         // Firefox deltaY returns lines instead of pixels
-        var delta = e.deltaMode !== 0x00 ? e.deltaY * 40 : e.deltaY; 
+        var delta = e.deltaMode !== 0x00 ? e.deltaY * 40 : e.deltaY;
+        delta += Math.random() * 2 - 1; // we provide "salt" to have different values for training
+        
         mouse.wheel += delta / _WHEEL_STEP / 180 * Math.PI;
     });
-
-    var wheelEvent = new WheelEvent("wheel", {deltaMode: 0x00});
-    
-    
 
     window.addEventListener("keydown", function(e) {
         
@@ -235,12 +241,17 @@ function init() {
                 data: Utils.static.parseTrainingData(training_data_imported),
                 epochs: _epochs,
                 visualize: true,
-                recurrent: false
+                recurrent: _recurrent,
+                dropout: _dropout,
             }));
         }
         else  {
             alert("No training data available");
         }
+    });
+
+    DOM.dropoutButton.addEventListener("click", function (e) {
+        brain.dropout(false);
     });
 }
 
@@ -268,26 +279,46 @@ function update() {
     try {
 
         // Build inputs / targets
-        var ball_acc = [normalize(ball.acc[X]), normalize(ball.acc[Y])];
-        var diff = [ball_acc[0] - prev_ball_acc[0], ball_acc[1] - prev_ball_acc[1]];
-        prev_ball_acc = ball_acc;
+        var normalized_ball_acc = [normalize(ball.acc[X]), normalize(ball.acc[Y])];
+        var diff = [normalized_ball_acc[0] - prev_ball_acc[0], normalized_ball_acc[1] - prev_ball_acc[1]]; // should we normalize these ones? I guess not they are really small
+        prev_ball_acc = normalized_ball_acc;
 
         // If we don't apply a threshold, our values can go exponentially up on non-correctly trained NN
-        var input_outputs = [filter(brain.output[X]), filter(brain.output[Y])];
+        var outputs_to_inputs = [filter(brain.output[X]), filter(brain.output[Y])]; // usefull if recurrent NN
 
-        var inputs = ball_acc.concat(diff);
-        var inputs_n_recurrence = inputs;
-        // var inputs_n_recurrence = inputs.concat(input_outputs);
+        if (saved_inputs.length >= saved_inputs_max_size) 
+            saved_inputs.splice(0, 2);
 
-        var normalized_g = normalize_gravity(gravity);
+        saved_inputs.push(normalized_ball_acc[X], normalized_ball_acc[Y]);
+
+        if (saved_inputs.length !== saved_inputs_max_size)
+            return;
+
+        var inputs = saved_inputs;
+        // var inputs = ball_acc.concat(diff);
+        var inputs_n_recurrence = _recurrent ? inputs.concat(outputs_to_inputs) : inputs;
+
+        var normalized_g = normalize_gravity(gravity); // values € [-1, 1]
         var targets = [normalized_g[X], normalized_g[Y]];
         
         // Feeforward NN with normalized inputs
         var neurons = brain.feed(inputs_n_recurrence);
-        outputs = [unormalize(neurons[X].output), unormalize(neurons[Y].output)];
+        // outputs = [unormalize(neurons[X].output), unormalize(neurons[Y].output)];
+        outputs = brain.output;
+        var output_x = outputs[X];
+        var output_y = outputs[Y];
         
         // Build training data (as string) for future exportation
-        Utils.static.addIntoTraining(inputs, targets);
+        // Get rid of redondant data by checking difference from the last ball acceleration
+        // if ((diff[X] !== 0 && diff[Y] !== 0) || mouse.click === true) {
+        if (DOM.saveDataCheckbox.checked) {
+            Utils.static.addIntoTraining(inputs, targets);
+            console.log("building training data", Utils.trainingSize );
+        }
+
+        // } else if (mouse.click) {
+            // console.log("dammit, we lose data");
+        // }
 
         if (DOM.backpropagationCheckbox.checked === true)
             brain.backpropagate(targets);
@@ -302,7 +333,7 @@ function update() {
     DOM.globalError.innerHTML = (brain.globalError * _CANVAS_WIDTH).toFixed(6);
     
     // Update Network SVG Vizualisation
-    brain.visualize(inputs_n_recurrence);
+    // brain.visualize(inputs_n_recurrence, 4);
 
     //////////////////////////////////////////
     
@@ -332,24 +363,19 @@ function update() {
     ctx.fill();
     ctx.restore();
 
-    var x = unormalize(outputs[X]);
-    var y = unormalize(outputs[Y]);
-
+    
     // Draw output gravity
-    if (neurons)
-    {
-        var d3 = euclidian_distance(x, y);
+    var d3 = euclidian_distance(output_x, output_y);
 
-        ctx.save();
-        ctx.fillStyle = "purple";
-        ctx.rotate(-Math.atan2(x, y));
-        ctx.beginPath();
-        ctx.moveTo(-10, 0);
-        ctx.lineTo(0, _SHAPE_SCALING * d3 + _SHAPE_PADDING );
-        ctx.lineTo(10, 0);
-        ctx.fill();
-        ctx.restore();   
-    }
+    ctx.save();
+    ctx.fillStyle = "purple";
+    ctx.rotate(-Math.atan2(output_x, output_y));
+    ctx.beginPath();
+    ctx.moveTo(-10, 0);
+    ctx.lineTo(0, _SHAPE_SCALING * d3 + _SHAPE_PADDING );
+    ctx.lineTo(10, 0);
+    ctx.fill();
+    ctx.restore();   
 
     // Draw ball
     ctx.beginPath();
@@ -358,7 +384,7 @@ function update() {
 
     // Update acceleration output
     DOM.accelerationOutputs[0].innerHTML = ball.acc[X].toFixed(4) + " / " + ball.acc[Y].toFixed(4);
-    DOM.accelerationOutputs[1].innerHTML = ball_acc[X].toFixed(4) + " / " + ball_acc[Y].toFixed(4);
+    DOM.accelerationOutputs[1].innerHTML = normalized_ball_acc[X].toFixed(4) + " / " + normalized_ball_acc[Y].toFixed(4);
 
     // Update gravity output
     DOM.gravityOutputs[0].innerHTML = gravity[X].toFixed(4) + " / " + gravity[Y].toFixed(4);
@@ -367,7 +393,10 @@ function update() {
 
 var safe = true, DOM, ctx, mouse, ball, brain, time;
 var outputs = [0, 0];
-var prev_ball_acc = [0, 0]
+var prev_ball_acc = [0, 0];
+
+var saved_inputs = [];
+var saved_inputs_max_size = 100; // has to be multiple of two.  
 
 window.onload = function() {
 
@@ -377,6 +406,7 @@ window.onload = function() {
         gravityOutputs: document.querySelectorAll("#gravity_outputs span"),
         globalError: document.querySelector("#global_error span"),
         backpropagationCheckbox: document.querySelector("#backpropagate"),  
+        saveDataCheckbox: document.querySelector("#save_data"),  
         learningRateRange: document.querySelector("#learning_rate input[type='range']"),
         learningRateOutput: document.querySelector("#learning_rate span"),
         trainButton: document.querySelector("#train"),
@@ -404,3 +434,5 @@ window.onload = function() {
 /* TODO
     -
 */
+
+safe = true;// avoid update

@@ -6,21 +6,15 @@ const _CANVAS_HEIGHT = 600;
 const _CIRCLE_RADIUS = 50;
 const _POINT_RADIUS = 8;
 
-const _epochs = 5;
+var _epochs = 900;
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
-    activation: "linear",
-    // activationParams: {alpha: 0.1},
-    momentum: 0.0,
-    lr: 0.05,
+    lr: 0.01,
     layers: [2, 3, 2],
-
-    // layers: [2, 4, 4, 4, 2],
-    // layers: [2, 5, 1, 5, 2]
-    // layers: [2, 15, 15, 15, 2]
-    // layers: [2, 3, 4, 5, 6, 5, 4, 3, 2]
-    // layers: [2, 40, 2]
-    // Find additionnal good hyperparameters configurations below in the code
+    optimizer: "adam",
+    optimizerParams: { alpha: 0.9, beta1: 0.9, beta2: 0.999 }, // 0.9 or more for adadelta
+    activation: "prelu",
+    activationParams: { alpha: 0.1 }
 };
 
 //////////////////////
@@ -90,8 +84,10 @@ function update() {
     
     ///////////////////// OWN LIBRAIRY JS //////////////////
 
-    // Feeforward NN
     try {
+
+        // yes theses inputs are normalized but it doesn't do nothing on this experiment.
+        // this was put in place in order to test training with normalized inputs; useful for ball_experiment
 
         var inputs = [normalize(mouse.x / norm_x), normalize(mouse.y / norm_y)];
         var targets = [normalize(mouse.x / norm_x), normalize(mouse.y / norm_y)];
