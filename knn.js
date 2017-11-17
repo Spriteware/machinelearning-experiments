@@ -190,27 +190,24 @@ var run = function() {
 
     //////////////////////////////////////////
 
-    window.onload = function() {
+    window.addEventListener("load", function () {
+
 
         var canvas = document.querySelector("canvas");
-        canvas.onclick = function(e) {
+        canvas.addEventListener("click", function(e) {
 
-            console.log(e);
             var rooms = (e.clientX - canvas.offsetLeft) * 2 / canvas.width * (list.rooms.max - list.rooms.min) + list.rooms.min;
-            var area = (canvas.height - (e.layerY - canvas.offsetTop) * 2) / canvas.height * (list.area.max - list.area.min) + list.area.min;
+            var area = (canvas.height - (e.clientY - canvas.offsetTop) * 2) / canvas.height * (list.area.max - list.area.min) + list.area.min;
             rooms = Math.round(rooms * 10) / 10;
             area = Math.round(area * 10) / 10;
-
-            console.log((e.layerY - canvas.offsetTop) * 2);
-            console.log(list.rooms, rooms, area);
             
-            var test = new Node({ rooms: rooms, area: area, undefined: true });
-            console.log("test:", test);
+            var node = new Node({ rooms: rooms, area: area, undefined: true });
+            console.log("New node:", node);
 
-            list.determineUnknown(test);
+            list.determineUnknown(node);
             draw(list);
-        };
-    };
+        });
+    });
 };
 
 /******** DATA *********/

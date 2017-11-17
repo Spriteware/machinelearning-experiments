@@ -1,12 +1,14 @@
-"use strict";
+"use strict"; // jshint ignore: line 
 
-const _TRAINING_SIZE_MAX = 10000;
 const _CANVAS_WIDTH  = 1000;
 const _CANVAS_HEIGHT = 600;
 const _CIRCLE_RADIUS = 50;
 const _POINT_RADIUS = 8;
 
-var _epochs = 900;
+var _epochs = 100;
+var _dropout = false;
+var _shuffle = true;
+
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
     lr: 0.01,
@@ -30,36 +32,50 @@ function unormalize(x) {
 
 function init() {
 
-    DOM.canvas.width = _CANVAS_WIDTH;
-    DOM.canvas.height = _CANVAS_HEIGHT;
+    _DOM.canvas.width = _CANVAS_WIDTH;
+    _DOM.canvas.height = _CANVAS_HEIGHT;
 
-    ctx.translate(_CANVAS_WIDTH / 2, _CANVAS_HEIGHT / 2);
-    ctx.scale(1, -1);
+    _ctx.translate(_CANVAS_WIDTH / 2, _CANVAS_HEIGHT / 2);
+    _ctx.scale(1, -1);
 
-    DOM.canvas.addEventListener("mousemove", function(e) {
-        mouse.x = (e.pageX - DOM.canvas.offsetLeft) * 2 - _CANVAS_WIDTH / 2;
-        mouse.y = (e.pageY - DOM.canvas.offsetTop) * -2 + _CANVAS_HEIGHT / 2;
-        mouse.refresh = true;
+    _DOM.canvas.addEventListener("mousemove", function(e) {
+        _mouse.x = (e.pageX - _DOM.canvas.offsetLeft) * 2 - _CANVAS_WIDTH / 2;
+        _mouse.y = (e.pageY - _DOM.canvas.offsetTop) * -2 + _CANVAS_HEIGHT / 2;
+        _mouse.refresh = true;
     });
 
-    DOM.dropoutButton.addEventListener("click", function(e) {
-        brain.dropout();
+    _DOM.dropoutButton.addEventListener("click", function(e) {
+        _brain.dropout();
     });
 
-    DOM.trainButton.addEventListener("click", function(e) {
-        
+    _DOM.trainButton.addEventListener("click", function (e) {
+
         // Initial training
-        if (typeof training_data_imported !== 'undefined' && training_data_imported !== undefined) {
-            DOM.trainButton.parentElement.appendChild(brain.train({
-                data: Utils.static.parseTrainingData(training_data_imported),
-                epochs: _epochs,
-                visualize: true
-            }));
+        if (typeof _imported_training_set === "undefined" || _imported_training_set === undefined) {
+            alert("No training data available. Check your var '_imported_training_set'");
+            return;
         }
-        else {
-            alert("No training data available");
-        }
+
+        var training_set = typeof _imported_training_set !== "undefined" ? Utils.static.parseTrainingData(_imported_training_set) : undefined;
+        var validation_set = typeof _imported_validation_set !== "undefined" ? Utils.static.parseTrainingData(_imported_validation_set) : undefined;
+        var test_set = typeof _imported_test_set !== "undefined" ? Utils.static.parseTrainingData(_imported_test_set) : undefined;
+
+        // Launch training
+        var graph = _brain.train({
+            training_set: training_set,
+            validation_set: validation_set,
+            test_set: test_set,
+
+            epochs: _epochs,
+            dropout: _dropout,
+            shuffle: _shuffle,
+            visualize: true
+        });
+
+        // Add visualization
+        _DOM.trainButton.parentElement.appendChild(graph);
     });
+
 
     window.addEventListener("keydown", function(e) {
 
@@ -67,71 +83,74 @@ function init() {
         {
             e.stopPropagation();
             e.preventDefault();
-            DOM.backpropagationCheckbox.click();
+            _DOM.backpropagationCheckbox.click();
         }
     });
 }
 
 function update() {
 
-    if (safe !== true) {
+    if (_safe !== true) {
         console.info("Script successfully stopped");
         return;
     }
 
     requestAnimationFrame(function() { update(); });
-    ctx.clearRect(-_CANVAS_WIDTH / 2, -_CANVAS_HEIGHT / 2, _CANVAS_WIDTH, _CANVAS_HEIGHT);
+    _ctx.clearRect(-_CANVAS_WIDTH / 2, -_CANVAS_HEIGHT / 2, _CANVAS_WIDTH, _CANVAS_HEIGHT);
     
     ///////////////////// OWN LIBRAIRY JS //////////////////
 
+    var inputs, targets, neurons;
+
     try {
 
-        // yes theses inputs are normalized but it doesn't do nothing on this experiment.
-        // this was put in place in order to test training with normalized inputs; useful for ball_experiment
+        // Yes theses inputs are normalized but it doesn't do nothing on this experiment.
+        // This was put in place in order to test training with normalized inputs; useful for ball_experiment
+        // The function 'normalize' impacts performance on this experimentation but the point is more to ensure that such a function can work.
 
-        var inputs = [normalize(mouse.x / norm_x), normalize(mouse.y / norm_y)];
-        var targets = [normalize(mouse.x / norm_x), normalize(mouse.y / norm_y)];
-        // var inputs = [mouse.x / norm_x, mouse.y / norm_y];
-        // var targets = [mouse.x / norm_x, mouse.y / norm_y];
-        var neurons = brain.feed(inputs);
+        inputs = [normalize(_mouse.x / norm_x), normalize(_mouse.y / norm_y)];
+        targets = [normalize(_mouse.x / norm_x), normalize(_mouse.y / norm_y)];
+        // inputs = [mouse.x / norm_x, mouse.y / norm_y];
+        // targets = [mouse.x / norm_x, mouse.y / norm_y];
+        neurons = _brain.feed(inputs);
 
-        if (DOM.backpropagationCheckbox.checked === true)
-            brain.backpropagate(targets);
+        if (_DOM.backpropagationCheckbox.checked === true)
+            _brain.backpropagate(targets);
 
         // Build training data (as string) for future exportation
         Utils.static.addIntoTraining(inputs, targets);
     
     } catch(ex) {
-        safe = false;
+        _safe = false;
         console.error(ex);
         return;
     }
             
     // Draw mouse 
-    ctx.beginPath();
-    ctx.arc(mouse.x, mouse.y, _POINT_RADIUS, 0, Math.PI * 2, false);
-    ctx.fill();
+    _ctx.beginPath();
+    _ctx.arc(_mouse.x, _mouse.y, _POINT_RADIUS, 0, Math.PI * 2, false);
+    _ctx.fill();
 
     // Draw circle
-    ctx.beginPath();
+    _ctx.beginPath();
     // ctx.arc(neurons[0].output * norm_x, neurons[1].output * norm_y, _CIRCLE_RADIUS, 0, Math.PI * 2, false);
-    ctx.arc(unormalize(neurons[0].output) * norm_x, unormalize(neurons[1].output) * norm_y, _CIRCLE_RADIUS, 0, Math.PI * 2, false);
-    ctx.stroke();
+    _ctx.arc(unormalize(neurons[0].output) * norm_x, unormalize(neurons[1].output) * norm_y, _CIRCLE_RADIUS, 0, Math.PI * 2, false);
+    _ctx.stroke();
 
     // Update global error display
-    DOM.globalError.innerHTML = (brain.globalError).toFixed(6);
+    _DOM.globalError.innerHTML = (_brain.globalError).toFixed(6);
 
     // Update Network SVG Vizualisation
-    brain.visualize(inputs);
+    _brain.visualize(inputs);
 }
 
-var safe = true, DOM, ctx, mouse, brain;
+var _safe = true, _DOM, _ctx, _mouse, _brain;
 var norm_x = _CANVAS_WIDTH / 2;
 var norm_y = _CANVAS_HEIGHT / 2;
 
 window.onload = function() {
 
-    DOM = {
+    _DOM = {
         canvas: document.querySelector("canvas"),
         globalError: document.querySelector("#global_error span"),
         backpropagationCheckbox: document.querySelector("#backpropagate"),
@@ -139,37 +158,14 @@ window.onload = function() {
         dropoutButton: document.querySelector("#dropout"),
     };
 
-    ctx = DOM.canvas.getContext("2d");
+    _ctx = _DOM.canvas.getContext("2d");
 
-    mouse = {x: 1, y: 2, refresh: false};
-    brain = new Network(_params);
+    _mouse = {x: 1, y: 2, refresh: false};
+    _brain = new Network(_params);
 
-    // # good-config 1:
-    // lr: 0.005, // we can up to 0.1
-    // layers: [2, 3, 2],
-    // hiddenLayerFunction: "linear",
-    
-    // #good-config 2:
-    // lr: 0.0005,
-    // layers: [2, 4, 4, 4, 2],
-    // hiddenLayerFunction: "linear",
+    //////////////////////////////////////////////
 
-    // #not-so-good-but-okay-config 3: (using tanh)
-    // lr: 0.04,
-    // layers: [2, 4, 2], // layers ddoesn't change things too much
-    // hiddenLayerFunction: "tanh",
-
-    // #good-config 4, epochs=200
-    // lr: 0.001,
-    // layers: [2, 6, 6, 6, 6, 6, 6, 6, 6, 6, 2],
-    // hiddenLayerFunction: "linear",
-
-    // Update activation function for hiddens layer:
-    // brain.setHiddenLayerToActivation(brain.static_tanhActivation, brain.static_tanhDerivative);
-    // brain.setHiddenLayerToActivation(brain.static_sigmoidActivation, brain.static_sigmoidDerivative);
-    // brain.setHiddenLayerToActivation(brain.static_reluActivation, brain.static_reluDerivative);
-
-    document.body.appendChild( brain.createVisualization() );
+    document.body.appendChild( _brain.createVisualization() );
     
     init();
     update();

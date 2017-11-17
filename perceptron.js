@@ -143,8 +143,8 @@ var index = 0;
 var canvas = document.querySelector("canvas");
 var ctx = canvas.getContext("2d");
 
-window.onload = function() {
+window.addEventListener("load", function() {
     
     init();
     update();
-};
+});

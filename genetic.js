@@ -2,8 +2,8 @@
 
 const _TIME_INTERVAL             = 1;
 const _DEFAULT_FITNESS           = 99999999;
-const _MUTATION_PROBABILITY      = 0.005;
-const _RANDOM_MUTATION_THRESHOLD = 0.5;
+const _MUTATION_PROBABILITY      = 0.01;
+const _RANDOM_MUTATION_THRESHOLD = 0.0;
 const _MAX_TIME_VALUES           = 100;
 const _POPULATION_NUMBER         = 30;
 const _ASCII_RANGES              = {min: 32, max: 126};
@@ -273,13 +273,7 @@ TimeAnalysis.prototype.getCurrentDt = function() {
 
 //////////////////////////////////////////////////////
 
-var output     = document.querySelector("output");
-// var population = new Population("Hello world !", _POPULATION_NUMBER);
-var population = new Population("To be or not to be", _POPULATION_NUMBER);
-// var population = new Population("Insanity is doing the same thing over and over again and expecting different results", _POPULATION_NUMBER);
-var time       = new TimeAnalysis(_MAX_TIME_VALUES);
-
-var run = function() {
+var run = function () {
 
     population.evolve();
     time.analyze();
@@ -288,10 +282,10 @@ var run = function() {
         setTimeout(run, _TIME_INTERVAL);
 
     ///////////////////////////////////
-    
-    window.onload = function() {
 
-        document.querySelector("button").onclick = function() {
+    window.onload = function () {
+
+        document.querySelector("button").onclick = function () {
 
             population.displayEverything = !population.displayEverything;
 
@@ -301,5 +295,17 @@ var run = function() {
     };
 };
 
-run();
+var output, time, population;
+
+window.onload = function (params) {
+
+    output = document.querySelector("output");
+    time = new TimeAnalysis(_MAX_TIME_VALUES);
+
+    // population = new Population("Hello world !", _POPULATION_NUMBER);
+    population = new Population("To be or not to be", _POPULATION_NUMBER);
+    // population = new Population("Insanity is doing the same thing over and over again and expecting different results", _POPULATION_NUMBER);
+
+    run();
+};
 

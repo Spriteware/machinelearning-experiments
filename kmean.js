@@ -221,13 +221,17 @@ var run = function() {
 
     //////////////////////////////////////////
 
-    window.onload = function() {
+    window.addEventListener("load", function() {
 
         var canvas = document.querySelector("canvas");
-        canvas.onclick = function(e) {
+
+        canvas.addEventListener("click", function(e) {
+
+            // var x = (e.pageX - canvas.offsetLeft) * 2 - canvas.width;
+            // var y = (e.pageY - canvas.offsetTop) * -2 + _CANVAS_HEIGHT;
 
             var dim1 = (e.clientX - canvas.offsetLeft) * 2 / canvas.width * (list.ranges[0].max - list.ranges[0].min) + list.ranges[0].min;
-            var dim2 = (canvas.height - (e.layerY - canvas.offsetTop) * 2) / canvas.height * (list.ranges[1].max - list.ranges[1].min) + list.ranges[1].min;
+            var dim2 = (canvas.height - (e.clientY - canvas.offsetTop) * 2) / canvas.height * (list.ranges[1].max - list.ranges[1].min) + list.ranges[1].min;
             dim1 = Math.round(dim1 * 10) / 10;
             dim2 = Math.round(dim2 * 10) / 10;
 
@@ -235,16 +239,18 @@ var run = function() {
             list.normalizeValues(node);
             list.add(node);
 
+            console.log( e ) ;
+
             console.info("New node: ", node.data[0], node.data[1]);
             refresh(list);
-        };
+        });
 
-        canvas.oncontextmenu = function(e) {
+        canvas.addEventListener("contextmenu", function(e) {
 
             e.preventDefault();
 
             var dim1 = (e.clientX - canvas.offsetLeft) * 2 / canvas.width * (list.ranges[0].max - list.ranges[0].min) + list.ranges[0].min;
-            var dim2 = (canvas.height - (e.layerY - canvas.offsetTop) * 2) / canvas.height * (list.ranges[1].max - list.ranges[1].min) + list.ranges[1].min;
+            var dim2 = (canvas.height - (e.clientY - canvas.offsetTop) * 2) / canvas.height * (list.ranges[1].max - list.ranges[1].min) + list.ranges[1].min;
             dim1 = Math.round(dim1 * 10) / 10;
             dim2 = Math.round(dim2 * 10) / 10;
 
@@ -255,18 +261,18 @@ var run = function() {
 
             console.info("New centroïd: ", centroid.data[0], centroid.data[1]);
             draw(list);
-        };
-    };
+        });
+    });
 
-    window.onkeypress = function(e) {
+    window.addEventListener("keypress", function(e) {
 
         if (e.charCode === 32)
             refresh(list);
-    };
+    });
 
-    window.onwheel = function(e) {
+    window.addEventListener("wheel", function(e) {
         refresh(list);
-    };
+    });
 };
 
 /******** DATA *********/

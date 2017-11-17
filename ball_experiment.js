@@ -1,3 +1,5 @@
+"use strict"; // jshint ignore: line 
+
 // Canvas and visualisation related constants
 const _CANVAS_WIDTH = 1400;
 const _CANVAS_HEIGHT = 800;
@@ -226,12 +228,6 @@ function init() {
         }
     });
 
-    DOM.learningRateRange.addEventListener("input", function(e) {
-
-        brain.lr = 1 / (e.target.value * e.target.value + 1);
-        DOM.learningRateOutput.innerHTML = brain.lr.toFixed(8);
-    });
-
     DOM.trainButton.addEventListener("click", function(e) {
         
         // Initial training
@@ -407,8 +403,6 @@ window.onload = function() {
         globalError: document.querySelector("#global_error span"),
         backpropagationCheckbox: document.querySelector("#backpropagate"),  
         saveDataCheckbox: document.querySelector("#save_data"),  
-        learningRateRange: document.querySelector("#learning_rate input[type='range']"),
-        learningRateOutput: document.querySelector("#learning_rate span"),
         trainButton: document.querySelector("#train"),
         dropoutButton: document.querySelector("#dropout"),
     };
@@ -420,8 +414,6 @@ window.onload = function() {
     ball = new Ball();
     brain = new Network(_params);
     
-    DOM.learningRateOutput.innerHTML = brain.lr;
-
     ///////////////////////////////////////////
 
     document.body.appendChild( brain.createVisualization() );
