@@ -43,6 +43,7 @@
         }
 
         #controls input[type="range"] {
+            position: relative;
             width: 300px;
         }
 
@@ -64,13 +65,15 @@
 </head>
 <body>
 
-<h1>Classficiation Experiment in JavaScript</h1>
+<h1>Classification Experiment in JavaScript</h1>
+
+<p>In this experiment, <samp>a</samp> and <samp>b</samp> are ranges between <samp>-0.5</samp> and <samp>0.5</samp> included. <br />The output on the right is <samp>1</samp> if <samp> a &gt; b </samp> and <samp>0</samp> otherwise.</p>
+<p>Additionnaly, it has a <span class="correct">green</span> background if the neural network outputs the same <br />(after rounding to the nearest integer) and a <span class="wrong">red</span> if it outputs an incorrect result.</p>
 
 <div id="controls">
     <p id="inputs">
-        <b>a</b> <input type="range" min="-5" max="5" step="any"><br />
-        <b>b</b> <input type="range" min="-5" max="5" step="any">
-        <!-- <b>c</b> <input type="range" min="-1" max="1" step="any"> -->
+        <b>a</b> <input type="range" min="-0.5" max="0.5" step="any"><br />
+        <b>b</b> <input type="range" min="-0.5" max="0.5" step="any">
     </p>
     <p id="target">1</span>
 </div>

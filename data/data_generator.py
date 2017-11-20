@@ -1,5 +1,7 @@
 #!/usr/bin/env python3 -u
 
+# This file generates a dataset for a classification experiment
+
 import sys
 import argparse
 import numpy as np
@@ -22,9 +24,9 @@ args = parser.parse_args()
 
 def function(k, data):
     if k == 2:
-        return True if data[0] >= data[1] else False
+        return True if data[0] > data[1] else False
     else:
-        return True if data[0] >= data[1] and data[1] >= data[2] else False
+        return True if data[0] > data[1] and data[1] > data[2] else False
 
 K = 2
 inputs = []
@@ -35,20 +37,20 @@ class_1 = 0
 # Building 50% target=0 and 50% target=1
 while class_0 < args.size / 2 or class_1 < args.size / 2:
 
-    # curr = np.random.randn(k)
-    curr = np.random.uniform(-5, 5, K)
-
     if args.type == "test":
-        if (curr[0] > -0.5 and curr[0] < 0.5) or (curr[1] > -0.5 and curr[1] < 0.5):
+        a, b = np.random.uniform(-5, 5, K)
+        if (a > -0.5 and a < 0.5) or (b > -0.5 and b < 0.5):
             continue
+    else:
+        a, b = np.random.uniform(-0.5, 0.5, K)
 
-    if class_1 < args.size / 2 and function(K, curr):
-        inputs.append(curr)
+    if class_1 < args.size / 2 and function(K, [a, b]):
+        inputs.append([a, b])
         targets.append(1)
         class_1 += 1
 
     elif class_0 < args.size / 2:
-        inputs.append(curr)
+        inputs.append([a, b])
         targets.append(0)
         class_0 += 1
 
@@ -90,7 +92,9 @@ if args.no_display == False:
 
     fig = plt.figure()
 
-    # Create subplot
+    # Create 2D or 3D subplots
+    # Sometimes, we can see black plots over red plots when it's not supposed to be : I suspected that plt.scatter has trouble with mixing colors
+
     if K == 2:
         ax = fig.add_subplot(111, aspect=1.0)
         ax.scatter(inputs[0], inputs[1], s=100, color=colors, alpha=0.8)
@@ -98,7 +102,7 @@ if args.no_display == False:
         ax = fig.add_subplot(111, aspect=1.0, projection="3d")
         ax.scatter(inputs[0], inputs[1], inputs[2], s=50, color=colors)
 
-        # Display the triangule in order to better visualize
+        # Display the triangle in order to better visualize
         X = 0; Y = 1; Z = 2
         pts = [
             (-0.5, -0.5, -0.5),

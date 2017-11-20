@@ -1,6 +1,7 @@
 
 // Brain hyperparameters
-var _epochs = 100;
+var _epochs = 20;
+// var _epochs = 5;
 var _dropout = false;
 var _shuffle = true;
 
@@ -8,8 +9,9 @@ var K = 2;
 
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
-    lr: 0.01,
-    layers: [K, 2, 2, 2, 1],
+    lr: 0.05,
+    layers: [K, 4, 4, 4, 1],
+    // layers: [K, 2,, 1],
     // layers: [K, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
     optimizer: "nag", // adagrad, adam, adadelta or nag
     optimizerParams: { alpha: 0.7, beta1: 0.9, beta2: 0.99 }, // alpha for nag and adadelta, betas for adam
@@ -35,13 +37,16 @@ function init() {
 
         // Launch training
         var graph = _brain.train({
-            training_set: training_set,
-            validation_set: validation_set,
-            test_set: test_set,
+            trainingSet: training_set,
+            validationSet: validation_set,
+            testSet: test_set,
 
             epochs: _epochs,
             dropout: _dropout,
             shuffle: _shuffle,
+
+            graphWidth: 400,
+            graphHeight: 100, 
             visualize: true
         });
 
@@ -93,7 +98,7 @@ function update() {
     }
 }
 
-var _inputs, _brain, _safe = false;
+var _inputs, _brain, _safe = true;
 
 window.onload = function () {
 
