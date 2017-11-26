@@ -7,39 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
-
-        body {
-            text-align: center;
-        }
-
-        h1 {
-            text-align: center;
-        }
-
-        canvas {
-            display: block;
-            width: auto;
-            height: auto;
-            margin: auto;
-            cursor: crosshair;
-        }
-
         #playground {
             height: 300px;
         }
-
-        #global_error {
-            padding-top: 10px;
-            color: #d46363;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        textarea { /* exported data */
-            width: 400px;
-            height: 200px;
-        }
-
     </style>
 </head>
 <body>
@@ -61,8 +31,8 @@
     <button id="dropout">dropout</button> 
 </p>
 
+<script src="../../lib/neural-network.js"></script>
 <script src="./data/mouse-data-5.js"></script> 
-<script src="../lib/neural-network.js"></script>
 <script src="./mouse_experiment.js"></script>
 </body>
 </html>
