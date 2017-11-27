@@ -1,13 +1,21 @@
 body {
     font: 14px Arial;
+    text-align: center;
+}
+
+h1 {
+    text-align: center;
 }
 
 canvas {
     display: block;
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: auto;
+    height: auto;
+    margin: auto;
     background: rgb(247, 247, 247);
+    cursor: crosshair;
+    
 }
 
 output {
@@ -20,9 +28,49 @@ svg {
     margin: auto;
 }
 
+#target {
+    float: right;
+}
+
+#global_error {
+    padding-top: 10px;
+    color: #d46363;
+    font-weight: bold;
+    text-align: center;
+}
+
+#controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+#controls input[type="range"] {
+    position: relative;
+    width: 300px;
+}
+
+#controls #inputs {
+    margin-left: 20px;
+}
+
+#controls #target {
+    margin: 0;
+    padding: 20px;
+    font-size: 40px;
+}
+
+.correct {
+    background: rgba(26, 188, 156, 0.1);
+}
+
+.wrong {
+    background:rgba(231, 76, 60, 0.1);
+}
+
+
 /** Neural network : **/
-
-
 
 #tooltip {
     position: absolute;

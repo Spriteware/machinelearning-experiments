@@ -10,8 +10,8 @@ var K = 2;
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
     lr: 0.05,
-    // layers: [K, 4, 4, 4, 1],
-    layers: [K, 2, 2, 1],
+    layers: [K, 4, 4, 4, 1],
+    // layers: [K, 2, 2, 1],
     // layers: [K, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
     optimizer: "nag", // adagrad, adam, adadelta or nag
     optimizerParams: { alpha: 0.7, beta1: 0.9, beta2: 0.99 }, // alpha for nag and adadelta, betas for adam
@@ -60,11 +60,26 @@ function init() {
         update();
     });
 
+
+    DOM.rangeSelection.addEventListener("change", function(e) {
+
+        var p = parseFloat(e.target.value);
+        DOM.ranges.forEach(function (input, index) {
+            input.setAttribute("min", -p);
+            input.setAttribute("max", p);
+        });
+    });
+
     DOM.ranges.forEach(function(input, index) {
         input.addEventListener("mousemove", function (e) {
             _inputs[index] = parseFloat(this.value);
         });
     });
+
+    // Fire events
+    var e = document.createEvent("HTMLEvents");
+    e.initEvent("change", false, true);
+    DOM.rangeSelection.dispatchEvent(e);
 }
 
 function update() {
@@ -103,6 +118,7 @@ var _inputs, _brain, _safe = true;
 window.onload = function () {
 
     DOM = {
+        rangeSelection: document.querySelector("#range-selection"),
         ranges: document.querySelectorAll("input[type='range']"),
         target: document.querySelector("#target"),
         trainButton: document.querySelector("#train"),
