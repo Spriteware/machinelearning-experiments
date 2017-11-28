@@ -1,9 +1,10 @@
 
-// Brain hyperparameters
+// Training hyperparameters
 var _epochs = 20;
 var _dropout = false;
 var _shuffle = true;
 
+// Brain hyperparameters
 const _params = {
     libURI: "http://localhost/machinelearning/lib/neural-network.js",
     lr: 0.05,
