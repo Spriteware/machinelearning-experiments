@@ -8,6 +8,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
+from matplotlib.pyplot import scatter, show, xlim, ylim
 from mpl_toolkits.mplot3d import Axes3D
 
 parser = argparse.ArgumentParser()
