@@ -3,30 +3,38 @@
 # This file generates a dataset for a classification experiment
 
 import sys
+import csv
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
+from matplotlib.pyplot import scatter, show, xlim, ylim
 from mpl_toolkits.mplot3d import Axes3D
 
 parser = argparse.ArgumentParser()
-parser.add_argument("type", help="type of the sample", choices=["training", "validation", "test"])
+parser.add_argument(
+    "type",
+    help="type of the sample",
+    choices=["training", "validation", "test"])
 parser.add_argument("size", help="size of the sample to create", type=int)
-args = parser.parse_args()
+parser.add_argument("--file", help="output file", default=None)
+parser.add_argument(
+    "--no-display",
+    help="display generated data on a graph",
+    action="store_true")
 
-parser.add_argument("--file", help="output file", default=args.type + "-set.js")
-parser.add_argument("--var", help="variable name", default="_imported_" + args.type + "_set")
-parser.add_argument("--no-display", help="display generated data on a graph", action="store_true")
-
 args = parser.parse_args()
+args.file = args.type + "-set.csv" if args.file is None else args.file
 
 ########################
+
 
 def function(k, data):
     if k == 2:
         return True if data[0] > data[1] else False
     else:
         return True if data[0] > data[1] and data[1] > data[2] else False
+
 
 K = 2
 inputs = []
@@ -57,38 +65,35 @@ while class_0 < args.size / 2 or class_1 < args.size / 2:
 ########################################################
 # Statistics
 print("Distribution statistics:")
-print("mean: {:f}, std: {:f}, variance: {:f}".format(np.mean(inputs), np.std(inputs), np.var(inputs)))
+print("mean: {:f}, std: {:f}, variance: {:f}".format(
+    np.mean(inputs), np.std(inputs), np.var(inputs)))
 
 #########################################################
+# Generate data CSV
 
-# Generate data string
-data = "var " + args.var + " = \""
+with open(args.file, "w", newline="\n", encoding="utf-8") as csvfile:
+    fieldnames = ["input_a", "input_b", "target"]
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-for i in range(args.size):
-    data += " ".join(map(str, inputs[i])) + " : " + str(targets[i]) + ";\\\n"
-
-data += "\";"
-
-# Display data
-# print(data)
-
-# Save data to a file
-fh = open(args.file, "w+")
-fh.write(data)
-fh.close()
-
+    writer.writeheader()
+    for i in range(args.size):
+        writer.writerow({
+            "input_a": inputs[i][0],
+            "input_b": inputs[i][1],
+            "target": targets[i]
+        })
 
 #########################################################
+# Display points in 2D
 
 inputs = np.asarray(inputs).transpose()
 targets = np.asarray(targets)
 
-# Display points in 2 D
 if args.no_display == False:
 
     colors = []
     for i in range(args.size):
-        colors.append((1, 0, 0) if targets[i] == 1 else (0,0,0,0.2))
+        colors.append((1, 0, 0) if targets[i] == 1 else (0, 0, 0, 0.2))
 
     fig = plt.figure()
 
@@ -103,7 +108,9 @@ if args.no_display == False:
         ax.scatter(inputs[0], inputs[1], inputs[2], s=50, color=colors)
 
         # Display the triangle in order to better visualize
-        X = 0; Y = 1; Z = 2
+        X = 0
+        Y = 1
+        Z = 2
         pts = [
             (-0.5, -0.5, -0.5),
             (0.5, -0.5, -0.5),
@@ -112,7 +119,11 @@ if args.no_display == False:
         ]
 
         def line_to(pt_from, pt_to):
-            ax.plot([pts[pt_from][0], pts[pt_to][0]], [pts[pt_from][1], pts[pt_to][1]], "b--", zs=[pts[pt_from][2], pts[pt_to][2]])
+            ax.plot(
+                [pts[pt_from][0], pts[pt_to][0]],
+                [pts[pt_from][1], pts[pt_to][1]],
+                "b--",
+                zs=[pts[pt_from][2], pts[pt_to][2]])
 
         line_to(0, 1)
         line_to(1, 2)
