@@ -8,7 +8,7 @@ import sine_lstm as lstm
 
 ###############################  CORE BELOW ###############################
 
-SEQ_SIZE = 300
+SEQ_SIZE = 3
 TRAIN_SIZE = 6000
 
 # SEQ_SIZE = 3
@@ -47,7 +47,7 @@ model.fit(
     x_train, 
     y_train,
     batch_size=32,
-    epochs=5,
+    epochs=1,
     validation_split=0.1,
     callbacks=callbacks)
 
@@ -82,5 +82,7 @@ plt.plot(np.arange(TEST_SIZE) + TEST_PADDING, raw_test, "--", linewidth=1, marke
 plt.plot(np.arange(predictions.shape[0]) + TEST_SIZE - 1 + TEST_PADDING, predictions, ".r", linewidth=1, markersize=2, label="Prediction")
 plt.plot(np.arange(1) + TEST_SIZE - 1 + TEST_PADDING, y_test, "xb", linewidth=1, markersize=2, label="Test wanted")
 
+
 plt.legend()
+plt.savefig("./img/" + str(lstm.dir_count("./img")), bbox_inches='tight')
 plt.show()

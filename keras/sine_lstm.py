@@ -54,8 +54,8 @@ def generate_data(dataset_size, sequence_size, padding=0.0):
     y1d = np.copy(data[sequence_size])
     x2d = np.delete(data, sequence_size, 0).transpose()
 
-    print("FIRST x2d", x2d.shape, x2d, "\n")
-    print("FIRST y1d", y1d.shape, y1d, "\n")
+    # print("FIRST x2d", x2d.shape, x2d, "\n")
+    # print("FIRST y1d", y1d.shape, y1d, "\n")
 
     y1d = y1d.reshape((y1d.shape[0], 1))
     x2d = x2d.reshape((x2d.shape[0], x2d.shape[1], 1))
