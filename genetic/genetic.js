@@ -280,21 +280,9 @@ var run = function () {
 
     if (!population.finished)
         setTimeout(run, _TIME_INTERVAL);
-
-    ///////////////////////////////////
-
-    window.onload = function () {
-
-        document.querySelector("button").onclick = function () {
-
-            population.displayEverything = !population.displayEverything;
-
-            if (population.finished)
-                population.display();
-        };
-    };
 };
 
+// Global variables
 var output, time, population;
 
 window.onload = function (params) {
@@ -307,5 +295,13 @@ window.onload = function (params) {
     // population = new Population("Insanity is doing the same thing over and over again and expecting different results", _POPULATION_NUMBER);
 
     run();
+
+    ///////////////////////////////////
+
+    document.querySelector("button").onclick = function () {
+        population.displayEverything = !population.displayEverything;
+        if (population.finished)
+            population.display();
+    };
 };
 
